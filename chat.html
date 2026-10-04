@@ -8,53 +8,227 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=Jua&display=swap">
-<link rel="stylesheet" href="css/style.css?v=20261004">
+<link rel="stylesheet" href="css/style.css?v=20261004.2">
 <title>상담 · 사주 노트</title>
 </head>
 <body data-tab="chat" class="lilac-page">
 <main class="app">
-  <!-- 상담은 아직 작동하지 않는 화면 미리보기입니다. -->
+  <!--
+    상담 화면입니다.
+    - 시험 모드(이 브라우저에 API 키가 있거나 가짜 답 스위치가 켜졌을 때)에서만 실제로 대화합니다.
+    - 그 밖에는 "상담은 곧 열려요" 미리보기를 보여 줍니다.
+    - AI를 부르는 코드는 js/chat-api.js, 넘길 원국 정보는 js/chat-context.js, 지시문은 data/chat-rules.md 에 있습니다.
+  -->
   <header class="topbar">
     <img class="mascot" data-mascot alt="" style="width:44px;height:44px">
     <h1 style="font-size:20px"><span id="charName">[캐릭터 이름]</span><span id="charJosa">과</span> 이야기</h1>
-    <span class="tag violet">오늘 무료 1회</span>
+    <span class="tag violet" id="modeTag">오늘 무료 1회</span>
   </header>
 
-  <div class="notice"><span data-icon="info"></span><span>상담은 곧 열려요 · 지금은 화면 미리보기예요</span></div>
+  <div class="notice" id="notice"><span data-icon="info"></span><span id="noticeText">상담은 곧 열려요 · 지금은 화면 미리보기예요</span></div>
 
-  <div class="chat-log">
+  <div class="chat-log" id="log" aria-live="polite">
     <div class="talk">
       <img class="mascot" data-mascot alt="" style="width:40px;height:40px">
       <p class="bubble">안녕하세요. 내 원국을 함께 보면서 이야기 나눠요. 아래에서 궁금한 것을 골라 보세요.</p>
     </div>
-    <div class="suggest" id="suggest">
-      <button type="button">올해 흐름이 궁금해요</button>
-      <button type="button">내 성향을 알고 싶어요</button>
-      <button type="button">일이 잘 안 풀려요</button>
-    </div>
+  </div>
+  <div class="suggest" id="suggest">
+    <button type="button">내 사주를 간단히 설명해 줘</button>
+    <button type="button">올해 흐름은 어때?</button>
+    <button type="button">오늘은 어떤 날이야?</button>
   </div>
 
   <div class="composer-wrap">
     <p class="care">마음이 많이 힘들 때는 가까운 사람이나 전문 상담과도 꼭 이야기해 주세요.</p>
-    <form class="composer" onsubmit="return false">
+    <form class="composer" id="composer">
       <label class="sr-only" for="msg">보낼 말</label>
-      <input id="msg" type="text" placeholder="상담이 열리면 여기에 쓸 수 있어요" disabled>
-      <button type="submit" disabled aria-label="보내기" data-icon="send"></button>
+      <input id="msg" type="text" autocomplete="off" placeholder="상담이 열리면 여기에 쓸 수 있어요" disabled>
+      <button type="submit" id="sendBtn" disabled aria-label="보내기" data-icon="send"></button>
     </form>
   </div>
+
+  <!-- 넘기는 자료 보기 (시험 모드에서만 보입니다) -->
+  <details class="debug" id="debug" hidden>
+    <summary>넘기는 자료 보기 (시험용)</summary>
+    <pre id="debugText"></pre>
+  </details>
+
+  <!-- 시험 설정: 사이트 주인용. 일반 방문자에게는 눈에 띄지 않게 아주 작게 둡니다. -->
+  <div class="test-area" id="testArea">
+    <button type="button" class="test-link" id="testLink" aria-expanded="false" aria-controls="testPanel">시험 설정</button>
+    <div class="test-panel" id="testPanel" hidden>
+      <p class="test-note">사이트 주인이 답을 시험해 보는 곳이에요. API 키는 이 브라우저에만 저장되고, Claude API 요청 말고는 어디에도 보내지 않아요.</p>
+      <label class="field-label" for="apiKey" style="margin-top:6px">Claude API 키</label>
+      <input class="input" id="apiKey" type="password" autocomplete="off" spellcheck="false" placeholder="sk-ant-...">
+      <p class="test-note" id="keyState"></p>
+      <div class="test-row">
+        <button type="button" class="btn" id="saveKey" style="margin-top:0">키 저장</button>
+        <button type="button" class="btn ghost" id="clearKey" style="margin-top:0">키 지우기</button>
+      </div>
+      <label class="check"><input type="checkbox" id="fakeMode">가짜 답으로 시험 (개발용 · API를 부르지 않음)</label>
+    </div>
+  </div>
 </main>
-<script src="js/common.js?v=20261004"></script>
+<script src="js/manse.js?v=20261004.2"></script>
+<script src="js/saju-extra.js?v=20261004.2"></script>
+<script src="js/common.js?v=20261004.2"></script>
+<script src="js/chat-context.js?v=20261004.2"></script>
+<script src="js/chat-api.js?v=20261004.2"></script>
 <script>
+function el(id) { return document.getElementById(id); }
+var HISTORY_LIMIT = 12;      // AI에게 다시 보내는 지난 대화 수 (질문과 답을 합쳐서)
+var turns = [];              // [{ role, content }] — 이 화면을 닫으면 사라집니다.
+var ctx = null;              // ChatContext.build() 결과
+var busy = false;
+
+// 시험 설정을 바닥글 아래로 옮깁니다 (일반 방문자 눈에 덜 띄게).
+document.querySelector(".app").appendChild(el("testArea"));
+
+// 캐릭터 이름 (data/site.json)
 Site.loadData("site").then(function (d) {
   var n = Site.textOf(d, "캐릭터_이름");
-  var nameEl = document.getElementById("charName");
-  if (Site.isPending(n)) { nameEl.classList.add("placeholder"); return; }
-  nameEl.textContent = n;
-  document.getElementById("charJosa").textContent = Site.josa(n, "과", "와");
+  if (Site.isPending(n)) { el("charName").classList.add("placeholder"); return; }
+  el("charName").textContent = n;
+  el("charJosa").textContent = Site.josa(n, "과", "와");
 });
-document.getElementById("suggest").addEventListener("click", function (e) {
-  if (e.target.closest("button")) Site.toast("상담은 곧 열려요");
+
+// ---- 말풍선 ----
+function addBubble(role, text) {
+  var row = document.createElement("div");
+  if (role === "user") {
+    row.className = "talk me";
+    row.innerHTML = '<p class="bubble right"></p>';
+  } else {
+    row.className = "talk";
+    row.innerHTML = '<img class="mascot" alt="" style="width:40px;height:40px"><p class="bubble"></p>';
+    row.querySelector("img").src = Site.MASCOT;
+  }
+  row.querySelector(".bubble").textContent = text;
+  el("log").appendChild(row);
+  row.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  return row;
+}
+function addTyping() {
+  var row = addBubble("assistant", "");
+  var b = row.querySelector(".bubble");
+  b.classList.add("typing");
+  b.setAttribute("aria-label", "답을 쓰는 중");
+  b.innerHTML = "<span></span><span></span><span></span>";
+  return row;
+}
+
+// ---- 화면 상태 ----
+function setComposer(on, placeholder) {
+  el("msg").disabled = !on; el("sendBtn").disabled = !on;
+  el("msg").placeholder = placeholder;
+}
+
+function setupPreview() {
+  el("modeTag").textContent = "오늘 무료 1회";
+  el("noticeText").textContent = "상담은 곧 열려요 · 지금은 화면 미리보기예요";
+  setComposer(false, "상담이 열리면 여기에 쓸 수 있어요");
+  el("debug").hidden = true;
+  ctx = null;
+}
+
+function setupTest() {
+  el("modeTag").textContent = ChatAPI.isFake() ? "시험 모드 · 가짜 답" : "시험 모드";
+  var s = Site.recall();
+  if (!s || !s.birth12) {
+    el("noticeText").innerHTML = '먼저 만세력에서 생일을 넣어 주세요. <a class="text-link" href="manse.html">생일 넣으러 가기</a>';
+    setComposer(false, "생일을 넣으면 이야기할 수 있어요");
+    return;
+  }
+  el("noticeText").textContent = "시험 모드 · " + Site.birthLine(s) + " 원국으로 이야기해요";
+  setComposer(false, "원국 정보를 준비하고 있어요");
+  ChatContext.build(s).then(function (c) {
+    ctx = c;
+    el("debugText").textContent = c.rules + "\n\n" + c.info + "\n\n" + c.readings;
+    el("debug").hidden = false;
+    setComposer(true, "궁금한 것을 써 보세요");
+  }).catch(function (err) {
+    el("noticeText").textContent = "원국 정보를 준비하지 못했어요: " + err.message;
+  });
+}
+
+function refreshMode() { ChatAPI.isTestMode() ? setupTest() : setupPreview(); }
+
+// ---- 보내기 ----
+function ask(text) {
+  text = (text || "").trim();
+  if (!text || busy) return;
+  if (!ChatAPI.isTestMode()) { Site.toast("상담은 곧 열려요"); return; }
+  if (!ctx) { Site.toast(Site.recall() ? "원국 정보를 준비하고 있어요" : "만세력에서 생일을 먼저 넣어 주세요"); return; }
+  busy = true;
+  setComposer(false, "답을 기다리고 있어요");
+  addBubble("user", text);
+  turns.push({ role: "user", content: text });
+  var typing = addTyping();
+  var recent = turns.slice(-HISTORY_LIMIT);
+  while (recent.length && recent[0].role !== "user") recent.shift();   // 대화는 늘 질문으로 시작해야 합니다.
+  ChatAPI.send([ctx.rules, ctx.info, ctx.readings], recent).then(function (res) {
+    typing.remove();
+    var reply = res.text || "답을 받지 못했어요. 다시 물어봐 주세요.";
+    if (res.stopReason === "max_tokens") reply += "\n\n(답이 길어서 중간에 끊겼어요.)";
+    addBubble("assistant", reply);
+    turns.push({ role: "assistant", content: res.text || "(빈 답)" });
+  }).catch(function (err) {
+    typing.remove();
+    turns.pop();   // 실패한 질문은 대화 기록에서 뺍니다.
+    var row = addBubble("assistant", err.message);
+    row.querySelector(".bubble").classList.add("error-bubble");
+  }).then(function () {
+    busy = false;
+    setComposer(true, "궁금한 것을 써 보세요");
+    el("msg").focus();
+  });
+}
+
+el("composer").addEventListener("submit", function (e) {
+  e.preventDefault();
+  var t = el("msg").value;
+  el("msg").value = "";
+  ask(t);
 });
+el("suggest").addEventListener("click", function (e) {
+  var b = e.target.closest("button");
+  if (b) ask(b.textContent);
+});
+
+// ---- 시험 설정 ----
+function showKeyState() {
+  var k = ChatAPI.getKey();
+  // 키 자체는 화면에 보여 주지 않고, 저장 여부와 끝 네 글자만 알려 줍니다.
+  el("keyState").textContent = k ? "저장된 키가 있어요 (끝 네 글자 " + k.slice(-4) + ")" : "저장된 키가 없어요.";
+  el("fakeMode").checked = ChatAPI.isFake();
+}
+el("testLink").addEventListener("click", function () {
+  var p = el("testPanel");
+  p.hidden = !p.hidden;
+  this.setAttribute("aria-expanded", String(!p.hidden));
+  if (!p.hidden) showKeyState();
+});
+el("saveKey").addEventListener("click", function () {
+  var v = el("apiKey").value.trim();
+  if (!v) { Site.toast("키를 넣어 주세요"); return; }
+  ChatAPI.setKey(v);
+  el("apiKey").value = "";
+  showKeyState(); refreshMode();
+  Site.toast("키를 이 브라우저에 저장했어요");
+});
+el("clearKey").addEventListener("click", function () {
+  ChatAPI.clearKey();
+  el("apiKey").value = "";
+  showKeyState(); refreshMode();
+  Site.toast("키를 지웠어요");
+});
+el("fakeMode").addEventListener("change", function () {
+  ChatAPI.setFake(this.checked);
+  refreshMode();
+});
+
+refreshMode();
 </script>
 </body>
 </html>
