@@ -85,7 +85,7 @@
 
 <script src="js/manse.js?v=20261004"></script>
 <script src="js/saju-extra.js?v=20261004"></script>
-<script src="js/gunghap.js?v=20261004.5"></script>
+<script src="js/gunghap.js?v=20261004.6"></script>
 <script src="js/common.js?v=20261004"></script>
 <script>
 var ORDER = ["시", "일", "월", "년"];
@@ -186,8 +186,8 @@ function render(people, rel, R, d) {
   });
   var gv = R.johuGive;
   h += '<tr><th class="pos">조후</th><td>나 ' + R.johu[0].level + "<br>상대 " + R.johu[1].level + "</td><td>" +
-    (gv[0].gives ? '<span class="rel hap">상대가 ' + gv[0].label + "</span>" : "") +
-    (gv[1].gives ? '<span class="rel hap">내가 ' + gv[1].label + "</span>" : "") +
+    gv[0].labels.map(function (t) { return '<span class="rel hap">상대가 ' + t + "</span>"; }).join("") +
+    gv[1].labels.map(function (t) { return '<span class="rel hap">내가 ' + t + "</span>"; }).join("") +
     (gv[0].gives || gv[1].gives ? "" : '<span class="muted">—</span>') + "</td></tr>";
   el("relTable").innerHTML = h;
 
@@ -292,7 +292,8 @@ function renderJohu(R, d) {
   [[0, "상대가 나에게"], [1, "내가 상대에게"]].forEach(function (x) {
     var g = G[x[0]];
     if (!g.gives) return;
-    line("johu-give", '<span class="rel hap">' + x[1] + " " + g.label + "</span> " +
+    // 일지·월지만 보며, 둘 다 있으면 일지를 먼저 보여 준다
+    line("johu-give", g.labels.map(function (t) { return '<span class="rel hap">' + x[1] + " " + t + "</span>"; }).join("") + " " +
       hitText(g.hits) + " <span class='muted'>(십성은 받는 사람의 일간 기준)</span>");
   });
 

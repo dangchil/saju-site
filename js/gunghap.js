@@ -95,7 +95,8 @@
     return { level: NOT_JUDGED, kind: null, month: m };
   }
 
-  // 자리 이름과 무게: 일지 > 월지 > 그 밖(천간, 년지, 시지). 숫자가 작을수록 무겁다.
+  // 자리 이름과 순서: 일지 > 월지 > 그 밖. 숫자가 작을수록 앞에 둔다.
+  // (한 사람 원국 안의 조후 글자를 보여 줄 때 쓰는 순서. 궁합에서 조후를 주는 자리는 일지·월지만 본다 — johuGive 참고)
   var PLACE_ORDER = ["일지", "월지", "년간", "월간", "일간", "시간", "년지", "시지"];
   function placeRank(place) { return place === "일지" ? 0 : (place === "월지" ? 1 : 2); }
 
@@ -121,12 +122,17 @@
     return j;
   }
 
-  // giver 의 원국에 receiver 의 조후 글자가 있는가. 십성은 받는 사람(receiver)의 일간 기준.
-  // 돌려주는 값: { gives, hits(무거운 자리부터), label: "일지로 조후를 줌" }
+  // giver 가 receiver 에게 조후를 주는가. 교수님 기준: giver 의 일지와 월지만 본다.
+  // 천간(일간 포함), 년지, 시지는 세지 않는다. 무게는 일지 > 월지.
+  // 십성은 받는 사람(receiver)의 일간 기준.
+  // 돌려주는 값: { gives, hits(일지 먼저), labels: ["일지로 조후를 줌", "월지로 조후를 줌"], label: 두 표시를 " · "로 이은 글 }
+  var GIVE_PLACES = ["일지", "월지"];
   function johuGive(giver, receiver) {
     var need = johuLevel(receiver.natal, receiver.timeUnknown);
-    var hits = johuHits(giver.natal, giver.timeUnknown, need.kind, stemIdx(receiver.natal, "일"));
-    return { gives: hits.length > 0, hits: hits, label: hits.length ? hits[0].place + "로 조후를 줌" : "" };
+    var hits = johuHits(giver.natal, giver.timeUnknown, need.kind, stemIdx(receiver.natal, "일"))
+      .filter(function (h) { return GIVE_PLACES.indexOf(h.place) >= 0; });
+    var labels = hits.map(function (h) { return h.place + "로 조후를 줌"; });
+    return { gives: hits.length > 0, hits: hits, labels: labels, label: labels.join(" · ") };
   }
 
   // ---- 서로 채워 주는 십성 (확정본 7장, 표는 쓰지 않음) ----

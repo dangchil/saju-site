@@ -85,7 +85,11 @@ check("오월생 + 상대 월지 子", G.johuGive(E2, D).label, "월지로 조�
 check("사월 + 년지 未 → 아주 더움", G.johuOf(mk("乙未 辛巳 甲辰 丙寅").natal).level, "아주 더움");
 check("사월만 → 더움", G.johuOf(mk("甲辰 己巳 甲寅 丙寅").natal).level, "더움");
 check("더운 사주에 상대 일지 亥는 아직 조후 아님", String(G.johuGive(mk("甲辰 丙寅 丁亥 戊申"), D).gives), "false");
-check("일지와 천간이 함께 있으면 일지가 먼저", G.johuGive(mk("丁卯 甲寅 丙午 甲辰"), A).hits.map(function (h) { return h.place; }).join(","), "일지,년간,일간");
+// 궁합에서 조후를 주는 자리는 상대의 일지·월지만 본다 (천간·년지·시지는 세지 않음)
+check("상대 년간 丙·시간 丁만 있으면 조후를 주지 않음", String(G.johuGive(mk("丙辰 庚寅 甲申 丁卯"), A).gives), "false");
+check("상대 일지 午 + 천간 丙·丁 → 일지만 셈", G.johuGive(mk("丁卯 甲寅 丙午 甲辰"), A).label, "일지로 조후를 줌");
+check("상대 년지 午·시지 巳는 세지 않음", String(G.johuGive(mk("庚午 戊寅 甲申 辛巳"), A).gives), "false");
+check("상대 일지·월지 둘 다 조후 글자 → 둘 다, 일지 먼저", G.johuGive(mk("甲辰 庚午 丁巳 甲辰"), A).labels.join(","), "일지로 조후를 줌,월지로 조후를 줌");
 check("조후 글자의 십성 (받는 사람 일간 庚 기준 午 = 정관)", G.johuGive(B, A).hits[0].ten, "정관");
 // 6) 조후와 원진이 겹치는 자리 (확정본 3장 축오): 내 일지 丑(자월생), 상대 일지 午
 var R = G.analyze(mk("甲辰 丙子 癸丑 戊午"), mk("辛酉 庚寅 甲午 甲戌"));
