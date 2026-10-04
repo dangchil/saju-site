@@ -85,7 +85,7 @@
 
 <script src="js/manse.js?v=20261004"></script>
 <script src="js/saju-extra.js?v=20261004"></script>
-<script src="js/gunghap.js?v=20261004.6"></script>
+<script src="js/gunghap.js?v=20261004.7"></script>
 <script src="js/common.js?v=20261004"></script>
 <script>
 var ORDER = ["시", "일", "월", "년"];
@@ -283,8 +283,8 @@ function renderJohu(R, d) {
     var t = "<b>" + WHO[i] + "</b> · " + j.level + " (월지 " + mHan;
     if (!j.kind) t += ", " + SEASON[j.month] + "에 태어남)";
     else t += (j.raised ? ", 같은 계절 글자가 더 있어 '아주'로 봄" : "") + ")";
-    if (j.kind) t += "<br>필요한 조후 글자: " + (j.kind === "cold" ? "丙·丁, 巳·午·未" : "壬·癸, 子·丑") +
-      "<br>원국 안의 조후 글자: " + (j.hits.length ? hitText(j.hits) : "없음");
+    if (j.kind) t += "<br>필요한 조후 글자: " + (j.kind === "cold" ? "巳·午·未" : "子·丑") +
+      "<br>원국 안의 조후 글자(일지·월지): " + (j.hits.length ? hitText(j.hits) : "없음");
     line("johu-person", t);
   });
 

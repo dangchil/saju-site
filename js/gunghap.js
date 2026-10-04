@@ -76,11 +76,11 @@
   //   아주 추움: 월지 자·축   추움: 월지 해
   //   아주 더움: 월지 오·미   더움: 월지 사
   //   월지가 해(사)여도 년지·일지·시지에 같은 계절 글자(해자축 / 사오미)가 하나 이상 더 있으면 "아주"로 올린다.
-  // 조후 글자
-  //   추운 사주: 천간 丙·丁, 지지 巳·午·未
-  //   더운 사주: 천간 壬·癸, 지지 子·丑  (亥는 아직 넣지 않는다)
+  // 조후 글자 (일지·월지에서만 본다 — 아래 JOHU_PLACES)
+  //   추운 사주: 巳·午·未
+  //   더운 사주: 子·丑  (亥는 아직 넣지 않는다)
+  //   천간 丙·丁 / 壬·癸 는 확정본의 조후 글자이지만, 교수님 기준에 따라 지금은 세지 않는다.
   var WINTER = [11, 0, 1], SUMMER = [5, 6, 7];             // 해자축, 사오미
-  var JOHU_STEM = { cold: [2, 3], hot: [8, 9] };           // 丙丁 / 壬癸
   var JOHU_BRANCH = { cold: [5, 6, 7], hot: [0, 1] };      // 巳午未 / 子丑
   var NOT_JUDGED = "따지지 않음";
 
@@ -95,42 +95,36 @@
     return { level: NOT_JUDGED, kind: null, month: m };
   }
 
-  // 자리 이름과 순서: 일지 > 월지 > 그 밖. 숫자가 작을수록 앞에 둔다.
-  // (한 사람 원국 안의 조후 글자를 보여 줄 때 쓰는 순서. 궁합에서 조후를 주는 자리는 일지·월지만 본다 — johuGive 참고)
-  var PLACE_ORDER = ["일지", "월지", "년간", "월간", "일간", "시간", "년지", "시지"];
-  function placeRank(place) { return place === "일지" ? 0 : (place === "월지" ? 1 : 2); }
+  // 조후 글자를 보는 자리: 일지와 월지만 본다 (교수님 기준). 천간(일간 포함), 년지, 시지는 세지 않는다.
+  // 무게는 일지 > 월지. 내 원국 안의 조후 글자(johuOf)와 상대가 주는 조후(johuGive)에 똑같이 쓴다.
+  var JOHU_PLACES = ["일지", "월지"];
 
-  // natal 안에서 kind("cold"/"hot") 사주에 필요한 조후 글자를 찾는다.
-  // 십성은 refDay(천간 번호) 기준으로 붙인다. 지지의 십성은 본기로 본다.
-  function johuHits(natal, timeUnknown, kind, refDay) {
+  // natal 의 일지·월지에서 kind("cold"/"hot") 사주에 필요한 조후 글자를 찾는다. 일지를 먼저 둔다.
+  // 십성은 refDay(천간 번호) 기준으로 붙이고, 지지의 십성은 본기로 본다.
+  function johuHits(natal, kind, refDay) {
     var hits = [];
     if (!kind) return hits;
-    cols(timeUnknown).forEach(function (l) {
-      var si = stemIdx(natal, l), bi = branchIdx(natal, l);
-      if (JOHU_STEM[kind].indexOf(si) >= 0) hits.push({ place: l + "간", han: E.S_HA[si], ko: S_KO[si], ten: E.tenGod(refDay, si) });
+    ["일", "월"].forEach(function (l) {
+      var bi = branchIdx(natal, l);
       if (JOHU_BRANCH[kind].indexOf(bi) >= 0) hits.push({ place: l + "지", han: B_HA[bi], ko: B_KO[bi], ten: E.tenGod(refDay, B_MAIN[bi]) });
     });
-    hits.forEach(function (h) { h.rank = placeRank(h.place); });
-    hits.sort(function (x, y) { return x.rank - y.rank || PLACE_ORDER.indexOf(x.place) - PLACE_ORDER.indexOf(y.place); });
     return hits;
   }
 
-  // 한 사람의 조후 판정: { level, kind, month, raised, hits(원국 안의 조후 글자) }
+  // 한 사람의 조후 판정: { level, kind, month, raised, hits(일지·월지에 있는 조후 글자) }
+  // 판정(level)은 월지로 정하고, hits 는 판정과 따로 원국 안의 조후 글자를 보여 줄 때 쓴다.
   function johuOf(natal, timeUnknown) {
     var j = johuLevel(natal, timeUnknown);
-    j.hits = johuHits(natal, timeUnknown, j.kind, stemIdx(natal, "일"));
+    j.hits = johuHits(natal, j.kind, stemIdx(natal, "일"));
     return j;
   }
 
-  // giver 가 receiver 에게 조후를 주는가. 교수님 기준: giver 의 일지와 월지만 본다.
-  // 천간(일간 포함), 년지, 시지는 세지 않는다. 무게는 일지 > 월지.
+  // giver 가 receiver 에게 조후를 주는가: giver 의 일지·월지에 receiver 의 조후 글자가 있는가.
   // 십성은 받는 사람(receiver)의 일간 기준.
   // 돌려주는 값: { gives, hits(일지 먼저), labels: ["일지로 조후를 줌", "월지로 조후를 줌"], label: 두 표시를 " · "로 이은 글 }
-  var GIVE_PLACES = ["일지", "월지"];
   function johuGive(giver, receiver) {
     var need = johuLevel(receiver.natal, receiver.timeUnknown);
-    var hits = johuHits(giver.natal, giver.timeUnknown, need.kind, stemIdx(receiver.natal, "일"))
-      .filter(function (h) { return GIVE_PLACES.indexOf(h.place) >= 0; });
+    var hits = johuHits(giver.natal, need.kind, stemIdx(receiver.natal, "일"));
     var labels = hits.map(function (h) { return h.place + "로 조후를 줌"; });
     return { gives: hits.length > 0, hits: hits, labels: labels, label: labels.join(" · ") };
   }
@@ -206,7 +200,7 @@
 
   var Gunghap = {
     REL_ORDER: REL_ORDER, HAP_KINDS: HAP_KINDS, branchRel: branchRel, stemHap: stemHap,
-    johuOf: johuOf, johuGive: johuGive, NOT_JUDGED: NOT_JUDGED, tenFill: tenFill, analyze: analyze, unlock: unlock,
+    JOHU_PLACES: JOHU_PLACES, johuOf: johuOf, johuGive: johuGive, NOT_JUDGED: NOT_JUDGED, tenFill: tenFill, analyze: analyze, unlock: unlock,
     LISTS: { YUKHAP: YUKHAP, SAMHAP: SAMHAP, BANGHAP: BANGHAP, WONJIN: WONJIN, CHUNG: CHUNG, GWIMUN: GWIMUN, HYEONG_GROUP: HYEONG_GROUP, HYEONG_PAIR: HYEONG_PAIR, JAHYEONG: JAHYEONG, PA: PA, GYEOKGAK: GYEOKGAK, STEM_HAP: STEM_HAP }
   };
   root.Gunghap = Gunghap;
