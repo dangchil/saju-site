@@ -1,0 +1,11 @@
+---
+layout: null
+---
+{% comment %}
+  사주 공부 글 목록을 자동으로 만드는 파일입니다. 고칠 필요가 없습니다.
+  study/posts/ 폴더 안의 .md 파일을 파일 이름 순서대로 모읍니다.
+{% endcomment %}
+{% assign posts = site.pages | where_exp: "p", "p.dir == '/study/posts/'" | sort: "path" %}
+[{% for p in posts %}
+  {"title": {{ p.title | default: p.name | jsonify }}, "url": {{ p.url | remove_first: "/study/" | jsonify }}}{% unless forloop.last %},{% endunless %}{% endfor %}
+]

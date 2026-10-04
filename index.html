@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#f6f5f1">
+<title>사주 노트</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body data-tab="home">
+<main class="app">
+  <header class="topbar"><h1>사주 노트</h1></header>
+
+  <!-- 캐릭터 그림 자리: 나중에 그림을 넣을 곳 -->
+  <div class="char-slot" aria-label="캐릭터 그림 자리">캐릭터<br>자리</div>
+
+  <p class="lead">사주는 앞날을 정해주는 답이 아니라<br>나와 지금 상황을 이해하는 참고입니다.</p>
+
+  <section class="card" id="introCard"></section>
+
+  <div class="entry-list">
+    <a class="entry" href="manse.html">
+      <span class="icon">萬</span>
+      <span><span class="t">만세력</span><br><span class="d">원국과 지장간, 대운과 세운을 봅니다</span></span>
+      <span class="go">›</span>
+    </a>
+    <a class="entry" href="iljin.html">
+      <span class="icon" id="todayIcon">日</span>
+      <span><span class="t">오늘의 일진</span><br><span class="d" id="todayLine">오늘의 일주와 나와의 관계를 봅니다</span></span>
+      <span class="go">›</span>
+    </a>
+    <a class="entry" href="study/index.html">
+      <span class="icon">學</span>
+      <span><span class="t">사주 공부</span><br><span class="d">사주 원리를 하나씩 정리한 글</span></span>
+      <span class="go">›</span>
+    </a>
+  </div>
+</main>
+
+<script src="js/manse.js"></script>
+<script src="js/saju-extra.js"></script>
+<script src="js/common.js"></script>
+<script>
+// 사이트 소개 (data/site.json 의 "홈_소개")
+Site.loadData("site").then(function (d) {
+  var card = document.getElementById("introCard");
+  card.appendChild(Site.readingBlock("이곳은", Site.textOf(d, "홈_소개"), "data/site.json"));
+});
+
+// 오늘의 일주를 입구 칸에 작게 보여 줍니다.
+(function () {
+  var t = todayKST();
+  var p = dayPillar(t.y, t.m, t.d);
+  document.getElementById("todayLine").textContent =
+    "오늘 " + t.m + "월 " + t.d + "일은 " + S_KO[p[0]] + B_KO[p[1]] + "(" + S_HA[p[0]] + B_HA[p[1]] + ")일입니다";
+  var icon = document.getElementById("todayIcon");
+  icon.innerHTML = Site.chip(S_HA[p[0]], S_ELEM[p[0]], "sm") + Site.chip(B_HA[p[1]], B_ELEM[p[1]], "sm");
+  icon.classList.add("gj");
+})();
+</script>
+</body>
+</html>

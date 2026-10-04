@@ -1,0 +1,17 @@
+# GitHub Pages 설정 파일입니다. 보통은 고칠 일이 없습니다.
+# study/posts/ 폴더에 .md 파일을 넣으면 GitHub Pages가 알아서 글 페이지(.html)로 만들어 줍니다.
+title: 사주 노트
+markdown: kramdown
+kramdown:
+  input: GFM
+plugins:
+  - jekyll-optional-front-matter   # 머리말(---) 없는 .md 파일도 페이지로 만듭니다
+  - jekyll-titles-from-headings     # 첫 번째 # 제목을 글 제목으로 씁니다
+defaults:
+  - scope:
+      path: "study/posts"
+    values:
+      layout: study-post
+exclude:
+  - README.md
+  - tests
