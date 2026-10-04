@@ -99,6 +99,7 @@
 <script src="js/common.js?v=20261004"></script>
 <script>
 var ORDER = ["시", "일", "월", "년"];
+var DDI = ["쥐", "소", "호랑이", "토끼", "용", "뱀", "말", "양", "원숭이", "닭", "개", "돼지"];   // 자~해 순서의 띠 동물
 var ELEM_NAME = ["목", "화", "토", "금", "수"], ELEM_HAN = ["木", "火", "土", "金", "水"];
 var THIS_YEAR = todayKST().y;
 
@@ -231,7 +232,9 @@ function renderReadings(natal, timeUnknown) {
     var box = el("readJiji"); box.innerHTML = "";
     cols.forEach(function (l) {
       var b = natal[l].branch_ko;
-      box.appendChild(Site.readingBlock(l + "지 " + b + "(" + natal[l].branch_han + ")", Site.textOf(d, b), "data/jiji.json"));
+      // 띠는 태어난 해의 지지(년지)로만 정하므로 년지 제목에만 붙입니다.
+      var title = l + "지 " + b + "(" + natal[l].branch_han + ")" + (l === "년" ? " · " + DDI[B_KO.indexOf(b)] + "띠" : "");
+      box.appendChild(Site.readingBlock(title, Site.textOf(d, b), "data/jiji.json"));
     });
   });
   Site.loadData("sipsung").then(function (d) {
