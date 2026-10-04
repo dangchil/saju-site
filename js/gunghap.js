@@ -3,7 +3,7 @@
 // 근거: 사이트풀이초안/궁합/궁합원칙_확정.md
 //   - 천간합: 일간끼리의 합 (갑기·을경·병신·정임·무계)
 //   - 지지: 확정본 5장의 육합·삼합·방합, 6장 "계산용 표준 목록"의 충·원진·귀문·형·파·격각
-//   - 조후: 확정본 3장. 계산 방법은 확정본에 없어 아래 temperature() 에 간단한 기준을 적어 두었다.
+//   - 조후: 확정본 3장 + 교수님 기준(월지로 판정, 조후 글자, 자리의 무게). 아래 johuOf()·johuGive() 참고.
 // js/manse.js 를 먼저 불러온 뒤 불러온다. manse.js 는 고치지 않는다.
 // node 에서도 require 해서 쓸 수 있다 (tests/gunghap-test.js).
 // =====================================================================
@@ -11,6 +11,7 @@
   var E = (typeof ManseEngine !== "undefined") ? ManseEngine
     : (typeof require === "function" ? require("./manse.js") : null);
   var S_KO = E.S_KO, B_KO = E.B_KO, B_HA = E.B_HA;
+  var B_MAIN = [9, 5, 0, 1, 4, 2, 3, 5, 6, 7, 4, 8];   // 지지의 본기 천간 (manse.js 의 B_MAIN 과 같다)
 
   // 지지 번호: 자0 축1 인2 묘3 진4 사5 오6 미7 신8 유9 술10 해11
   function b(han) { return B_HA.indexOf(han); }
@@ -70,30 +71,68 @@
   function branchIdx(natal, l) { return B_KO.indexOf(natal[l].branch_ko); }
   function cols(timeUnknown) { return POS.filter(function (l) { return !(timeUnknown && l === "시"); }); }
 
-  // ---- 조후 (확정본 3장) ----
-  // 확정본에 계산 방법이 없어 이렇게 간단히 가늠한다:
-  //   따뜻함 = 원국 글자 가운데 화(火)의 수 + (태어난 달이 사·오·미월이면 1)
-  //   차가움 = 원국 글자 가운데 수(水)의 수 + (태어난 달이 해·자·축월이면 1)
-  //   따뜻함이 차가움보다 2 이상 많으면 "따뜻한 원국", 반대면 "차가운 원국", 그 사이는 "고른 원국"
-  // 한 사람은 따뜻하고 한 사람은 차가우면, 서로의 온도를 채워 주는 관계(조후)로 본다.
-  var FIRE = 1, WATER = 4;
-  function temperature(natal, timeUnknown) {
-    var hot = 0, cold = 0;
-    cols(timeUnknown).forEach(function (l) {
-      [natal[l].stem_elem, natal[l].branch_elem].forEach(function (e) { if (e === FIRE) hot++; if (e === WATER) cold++; });
-    });
+  // ---- 조후 (확정본 3장, 교수님 기준) ----
+  // 한 사람의 판정은 월지로 한다. 겨울·여름 생만 따지고, 봄·가을 생(월지 인묘진, 신유술)은 따지지 않는다.
+  //   아주 추움: 월지 자·축   추움: 월지 해
+  //   아주 더움: 월지 오·미   더움: 월지 사
+  //   월지가 해(사)여도 년지·일지·시지에 같은 계절 글자(해자축 / 사오미)가 하나 이상 더 있으면 "아주"로 올린다.
+  // 조후 글자
+  //   추운 사주: 천간 丙·丁, 지지 巳·午·未
+  //   더운 사주: 천간 壬·癸, 지지 子·丑  (亥는 아직 넣지 않는다)
+  var WINTER = [11, 0, 1], SUMMER = [5, 6, 7];             // 해자축, 사오미
+  var JOHU_STEM = { cold: [2, 3], hot: [8, 9] };           // 丙丁 / 壬癸
+  var JOHU_BRANCH = { cold: [5, 6, 7], hot: [0, 1] };      // 巳午未 / 子丑
+  var NOT_JUDGED = "따지지 않음";
+
+  function johuLevel(natal, timeUnknown) {
     var m = branchIdx(natal, "월");
-    if ([5, 6, 7].indexOf(m) >= 0) hot++;
-    if ([11, 0, 1].indexOf(m) >= 0) cold++;
-    var d = hot - cold;
-    return { hot: hot, cold: cold, kind: d >= 2 ? "따뜻한" : (d <= -2 ? "차가운" : "고른") };
+    var others = cols(timeUnknown).filter(function (l) { return l !== "월"; }).map(function (l) { return branchIdx(natal, l); });
+    var more = function (set) { return others.some(function (x) { return set.indexOf(x) >= 0; }); };
+    if (m === 0 || m === 1) return { level: "아주 추움", kind: "cold", month: m };
+    if (m === 11) return { level: more(WINTER) ? "아주 추움" : "추움", kind: "cold", month: m, raised: more(WINTER) };
+    if (m === 6 || m === 7) return { level: "아주 더움", kind: "hot", month: m };
+    if (m === 5) return { level: more(SUMMER) ? "아주 더움" : "더움", kind: "hot", month: m, raised: more(SUMMER) };
+    return { level: NOT_JUDGED, kind: null, month: m };
+  }
+
+  // 자리 이름과 무게: 일지 > 월지 > 그 밖(천간, 년지, 시지). 숫자가 작을수록 무겁다.
+  var PLACE_ORDER = ["일지", "월지", "년간", "월간", "일간", "시간", "년지", "시지"];
+  function placeRank(place) { return place === "일지" ? 0 : (place === "월지" ? 1 : 2); }
+
+  // natal 안에서 kind("cold"/"hot") 사주에 필요한 조후 글자를 찾는다.
+  // 십성은 refDay(천간 번호) 기준으로 붙인다. 지지의 십성은 본기로 본다.
+  function johuHits(natal, timeUnknown, kind, refDay) {
+    var hits = [];
+    if (!kind) return hits;
+    cols(timeUnknown).forEach(function (l) {
+      var si = stemIdx(natal, l), bi = branchIdx(natal, l);
+      if (JOHU_STEM[kind].indexOf(si) >= 0) hits.push({ place: l + "간", han: E.S_HA[si], ko: S_KO[si], ten: E.tenGod(refDay, si) });
+      if (JOHU_BRANCH[kind].indexOf(bi) >= 0) hits.push({ place: l + "지", han: B_HA[bi], ko: B_KO[bi], ten: E.tenGod(refDay, B_MAIN[bi]) });
+    });
+    hits.forEach(function (h) { h.rank = placeRank(h.place); });
+    hits.sort(function (x, y) { return x.rank - y.rank || PLACE_ORDER.indexOf(x.place) - PLACE_ORDER.indexOf(y.place); });
+    return hits;
+  }
+
+  // 한 사람의 조후 판정: { level, kind, month, raised, hits(원국 안의 조후 글자) }
+  function johuOf(natal, timeUnknown) {
+    var j = johuLevel(natal, timeUnknown);
+    j.hits = johuHits(natal, timeUnknown, j.kind, stemIdx(natal, "일"));
+    return j;
+  }
+
+  // giver 의 원국에 receiver 의 조후 글자가 있는가. 십성은 받는 사람(receiver)의 일간 기준.
+  // 돌려주는 값: { gives, hits(무거운 자리부터), label: "일지로 조후를 줌" }
+  function johuGive(giver, receiver) {
+    var need = johuLevel(receiver.natal, receiver.timeUnknown);
+    var hits = johuHits(giver.natal, giver.timeUnknown, need.kind, stemIdx(receiver.natal, "일"));
+    return { gives: hits.length > 0, hits: hits, label: hits.length ? hits[0].place + "로 조후를 줌" : "" };
   }
 
   // ---- 서로 채워 주는 십성 (확정본 7장, 표는 쓰지 않음) ----
   // 내 원국(일간 제외)에 없는 십성 묶음을, 상대 원국 글자 가운데 2개 이상이 그 십성으로 작용하면 "채워 준다"고 본다.
   var GROUP_OF = { 비견: "비겁", 겁재: "비겁", 식신: "식상", 상관: "식상", 편재: "재성", 정재: "재성", 편관: "관성", 정관: "관성", 편인: "인성", 정인: "인성" };
   var GROUPS = ["비겁", "식상", "재성", "관성", "인성"];
-  var B_MAIN = [9, 5, 0, 1, 4, 2, 3, 5, 6, 7, 4, 8];   // 지지의 본기 천간 (manse.js 의 B_MAIN 과 같다)
   function tenFill(nA, uA, nB, uB) {
     var dayA = stemIdx(nA, "일"), have = {};
     cols(uA).forEach(function (l) {
@@ -125,11 +164,24 @@
     else if (sh && day.indexOf("충") >= 0) combo = "천합지충";
     else if (sh && day.indexOf("원진") >= 0) combo = "천합원진";
     else if (!sh && hasHap) combo = "지지만합";
-    var ta = temperature(a.natal, a.timeUnknown), tb = temperature(b.natal, b.timeUnknown);
-    var johu = (ta.kind === "따뜻한" && tb.kind === "차가운") || (ta.kind === "차가운" && tb.kind === "따뜻한");
+    // 조후: [0] 나의 판정, [1] 상대의 판정 / give[0] 상대가 나에게, give[1] 내가 상대에게
+    var johu = [johuOf(a.natal, a.timeUnknown), johuOf(b.natal, b.timeUnknown)];
+    var give = [johuGive(b, a), johuGive(a, b)];
+    // 조후를 주는 지지 자리가 같은 자리의 원진·충과 겹치는가 (확정본 3장의 축오처럼)
+    var overlap = [];
+    give.forEach(function (g) {
+      g.hits.forEach(function (h) {
+        if (h.place.slice(-1) !== "지") return;
+        var p = positions[POS.indexOf(h.place[0])];
+        p.rels.forEach(function (r) {
+          if ((r === "원진" || r === "충") && !overlap.some(function (o) { return o.pos === p.pos && o.rel === r; }))
+            overlap.push({ pos: p.pos, rel: r, a: p.a, b: p.b });
+        });
+      });
+    });
     return {
       stemHap: sh, positions: positions, combo: combo,
-      temp: [ta, tb], johu: johu,
+      johu: johu, johuGive: give, johuOverlap: overlap,
       fill: [tenFill(a.natal, a.timeUnknown, b.natal, b.timeUnknown), tenFill(b.natal, b.timeUnknown, a.natal, a.timeUnknown)],
       unlock: [unlock(a, b), unlock(b, a)]
     };
@@ -148,7 +200,7 @@
 
   var Gunghap = {
     REL_ORDER: REL_ORDER, HAP_KINDS: HAP_KINDS, branchRel: branchRel, stemHap: stemHap,
-    temperature: temperature, tenFill: tenFill, analyze: analyze, unlock: unlock,
+    johuOf: johuOf, johuGive: johuGive, NOT_JUDGED: NOT_JUDGED, tenFill: tenFill, analyze: analyze, unlock: unlock,
     LISTS: { YUKHAP: YUKHAP, SAMHAP: SAMHAP, BANGHAP: BANGHAP, WONJIN: WONJIN, CHUNG: CHUNG, GWIMUN: GWIMUN, HYEONG_GROUP: HYEONG_GROUP, HYEONG_PAIR: HYEONG_PAIR, JAHYEONG: JAHYEONG, PA: PA, GYEOKGAK: GYEOKGAK, STEM_HAP: STEM_HAP }
   };
   root.Gunghap = Gunghap;
