@@ -128,7 +128,8 @@ GitHub 웹사이트에서는 `images` 폴더를 열고 'Add file → Upload file
 - 사이트 이름: `js/common.js` 의 `SITE_NAME` 한 줄, 그리고 각 html 파일의 `<title>`
 - 이용약관·개인정보처리방침·사업자 정보: `legal.html` 의 "준비 중" 세 곳
 - 색과 글꼴: `css/style.css` 맨 위 `:root` 안의 값 (오행 칩 색도 여기 있습니다)
-- 사주 공부 첫 글 세 편(천간과 지지, 오행, 십성): `study/posts/01-ganji.md`, `02-ohaeng.md`, `03-sipsung.md` 의 "준비 중" 자리. 홈의 '사주 공부' 카드가 이 세 글로 이어집니다
+- 사주 공부 글 네 편(천간이란, 지지란, 오행, 십성이란): `study/posts/01-ganji.md`, `01-jiji.md`, `02-ohaeng.md`, `03-sipsung.md`. 홈의 '사주 공부' 카드가 이 네 글로 이어집니다. 글을 더하거나 빼면 `index.html` 의 '7. 사주 공부' 카드도 함께 고치세요
+- `css/style.css` 나 `js/` 파일을 고친 뒤에는 각 html 에서 그 파일을 부르는 줄 끝의 `?v=20261004` 숫자를 새로 바꿔 주세요(예: 고친 날짜). 숫자가 바뀌어야 방문자 브라우저가 예전 파일 대신 새 파일을 받습니다
 
 ## 사주 공부 글 올리는 법
 
