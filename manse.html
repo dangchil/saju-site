@@ -3,71 +3,84 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#f6f5f1">
-<title>만세력 · 사주 노트</title>
+<meta name="theme-color" content="#FFF7EC">
+<link rel="icon" href="images/mascot.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=Jua&display=swap">
 <link rel="stylesheet" href="css/style.css">
+<title>만세력 · 사주 노트</title>
 </head>
 <body data-tab="home">
 <main class="app">
-  <header class="topbar"><a class="back" href="index.html" aria-label="홈으로">‹</a><h1>만세력</h1></header>
+  <header class="topbar">
+    <a class="icon-btn plain" href="index.html" aria-label="홈으로" data-icon="back"></a>
+    <h1>만세력</h1>
+  </header>
 
   <!-- 입력 -->
   <section class="card" id="formCard">
     <div class="error" id="errorBox" hidden></div>
-    <form id="birthForm" autocomplete="off">
-      <label class="field" for="birth12">생년월일시</label>
-      <input type="tel" id="birth12" inputmode="numeric" maxlength="12" placeholder="예: 200708031800">
-      <div class="hint">12자리 숫자로 넣어 주세요. 시각은 24시간제입니다 (오후 6시는 1800).</div>
-
-      <label class="field">양력 · 음력 · 윤달</label>
-      <div class="seg">
-        <label><input type="radio" name="cal" value="양력" checked><span>양력</span></label>
-        <label><input type="radio" name="cal" value="음력"><span>음력</span></label>
-        <label><input type="radio" name="cal" value="윤달"><span>윤달</span></label>
+    <form id="birthForm" autocomplete="off" novalidate>
+      <span class="field-label" id="calLab">양력 · 음력</span>
+      <div class="pills" role="radiogroup" aria-labelledby="calLab">
+        <label class="pill"><input type="radio" name="cal" value="양력" checked>양력</label>
+        <label class="pill"><input type="radio" name="cal" value="음력">음력</label>
+        <label class="pill"><input type="radio" name="cal" value="윤달">음력 윤달</label>
       </div>
 
-      <label class="field">성별</label>
-      <div class="seg">
-        <label><input type="radio" name="gender" value="남"><span>남</span></label>
-        <label><input type="radio" name="gender" value="여"><span>여</span></label>
+      <label class="field-label" for="bdate">생년월일</label>
+      <input class="input" type="text" id="bdate" inputmode="numeric" maxlength="8" placeholder="예: 19900515">
+      <div class="hint">8자리 숫자로 넣어 주세요 (연 4자리 · 월 2자리 · 일 2자리)</div>
+
+      <label class="field-label" for="btime">태어난 시간</label>
+      <div class="time-row">
+        <input class="input" type="text" id="btime" inputmode="numeric" maxlength="4" placeholder="예: 0930">
+        <label class="check"><input type="checkbox" id="noTime">시간 모름</label>
+      </div>
+      <div class="hint">24시간제 4자리입니다. 오후 6시 30분은 1830</div>
+
+      <span class="field-label" id="genLab">성별</span>
+      <div class="pills" role="radiogroup" aria-labelledby="genLab">
+        <label class="pill"><input type="radio" name="gender" value="여">여자</label>
+        <label class="pill"><input type="radio" name="gender" value="남">남자</label>
       </div>
 
-      <button class="btn" type="submit">만세력 보기</button>
+      <button class="btn" type="submit">원국 보기</button>
     </form>
   </section>
 
   <!-- 결과 -->
   <div id="result" hidden>
-    <p class="muted small" id="summary"></p>
-
     <section class="card">
-      <h2>원국</h2>
-      <p class="caption">천간십성 · 천간 · 지지 · 지지십성 · 지장간 · 십이운성</p>
-      <div class="table-wrap" id="natal"></div>
-      <div class="legend" id="saryeongNote"></div>
+      <div class="result-head">
+        <img class="mascot" data-mascot alt="">
+        <div>
+          <div class="say" id="say"></div>
+          <div class="sub" id="summary"></div>
+        </div>
+      </div>
+      <table class="wonguk" id="natal"></table>
+      <p class="saryeong-note" id="saryeongNote"></p>
+    </section>
+
+    <section class="card ohaeng">
+      <h2>오행 분포</h2>
+      <p class="caption" id="ohaengCap">원국 여덟 글자를 오행으로 나눠 센 것이에요.</p>
+      <div id="ohaengBars"></div>
     </section>
 
     <section class="card">
       <h2>대운</h2>
       <p class="caption" id="daeunCaption"></p>
-      <div class="strip" id="daeunStrip" role="list"></div>
-      <div class="seun-panel" id="seunPanel" hidden>
-        <p class="caption" id="seunCaption"></p>
-        <div class="strip" id="seunStrip"></div>
-      </div>
-    </section>
-
-    <section class="card">
-      <h2>세운</h2>
-      <p class="caption">올해를 가운데 두고 앞뒤 다섯 해씩 보여 드립니다.</p>
-      <div class="strip" id="yearStrip"></div>
+      <div class="strip" id="daeunStrip"></div>
+      <h2 style="margin-top:14px">세운</h2>
+      <p class="caption" id="seunCaption"></p>
+      <div class="strip" id="seunStrip"></div>
     </section>
 
     <!-- 풀이: data/ 폴더의 파일에서 읽어 옵니다 -->
-    <section class="card">
-      <h2>나의 일간</h2>
-      <div id="readIlgan"></div>
-    </section>
+    <section class="card" id="ilganCard"></section>
     <section class="card">
       <h2>원국의 지지</h2>
       <div id="readJiji"></div>
@@ -86,128 +99,137 @@
 <script src="js/common.js"></script>
 <script>
 var ORDER = ["시", "일", "월", "년"];
+var ELEM_NAME = ["목", "화", "토", "금", "수"], ELEM_HAN = ["木", "火", "土", "金", "水"];
 var THIS_YEAR = todayKST().y;
 
 function el(id) { return document.getElementById(id); }
-function stemElemOf(han) { return S_ELEM[S_HA.indexOf(han)]; }
-// 가로 띠 안에서 "지금" 칸이 가운데 오도록 옆으로만 밀어 줍니다 (화면 전체는 움직이지 않음).
-function centerNow(strip) {
-  var cur = strip.querySelector(".lun.now");
-  if (cur) strip.scrollLeft = cur.offsetLeft - strip.offsetLeft - (strip.clientWidth - cur.offsetWidth) / 2;
-}
 
 // ---- 원국 표 ----
-function renderNatal(natal, sar) {
-  function row(label, fn) {
-    return '<tr><td class="lab">' + label + "</td>" + ORDER.map(fn).join("") + "</tr>";
+function renderNatal(natal, sar, timeUnknown) {
+  function cellFor(l, fn) {
+    if (timeUnknown && l === "시") return '<td class="sib">·</td>';
+    return fn(l);
   }
-  var h = '<table class="saju"><tr><th></th>' + ORDER.map(function (l) { return "<th>" + l + "주</th>"; }).join("") + "</tr>";
-  h += row("천간십성", function (l) { return '<td class="sib">' + natal[l].ten_stem + "</td>"; });
-  h += row("천간", function (l) {
-    return '<td class="' + (l === "일" ? "dm" : "") + '">' + Site.chip(natal[l].stem_han, natal[l].stem_elem) +
-      '<span class="ko">' + natal[l].stem_ko + "</span></td>";
+  function row(fn) { return "<tr>" + ORDER.map(function (l) { return cellFor(l, fn); }).join("") + "</tr>"; }
+  var dayCls = function (l) { return l === "일" ? ' class="day"' : ""; };
+  var h = "<tr>" + ORDER.map(function (l) { return "<th>" + l + "주</th>"; }).join("") + "</tr>";
+  h += row(function (l) { return '<td class="sib' + (l === "일" ? " day" : "") + '">' + natal[l].ten_stem + "</td>"; });
+  h += row(function (l) {
+    return "<td" + dayCls(l) + ">" + Site.chip(natal[l].stem_han, natal[l].stem_elem) + '<span class="ko">' + natal[l].stem_ko + "</span></td>";
   });
-  h += row("지지", function (l) {
-    return "<td>" + Site.chip(natal[l].branch_han, natal[l].branch_elem) + '<span class="ko">' + natal[l].branch_ko + "</span></td>";
+  h += row(function (l) {
+    return "<td" + dayCls(l) + ">" + Site.chip(natal[l].branch_han, natal[l].branch_elem) + '<span class="ko">' + natal[l].branch_ko + "</span></td>";
   });
-  h += row("지지십성", function (l) { return '<td class="sib">' + natal[l].ten_branch + "</td>"; });
-  h += row("지장간", function (l) {
+  h += row(function (l) { return '<td class="sib' + (l === "일" ? " day" : "") + '">' + natal[l].ten_branch + "</td>"; });
+  h += row(function (l) {
     var chars = natal[l].hidden.split("");
-    return '<td><span class="hidden-list">' + chars.map(function (ch, i) {
-      var c = Site.chip(ch, stemElemOf(ch), "sm");
-      if (l === "월" && i === sar.index) c = c.replace('class="chip ', 'class="chip saryeong ').replace("<span ", '<span title="사령" ');
-      return c;
+    return "<td" + dayCls(l) + '><div class="row-label">지장간</div><span class="hidden-row">' + chars.map(function (ch, i) {
+      var sar1 = l === "월" && i === sar.index;
+      return '<span class="hj' + (sar1 ? ' saryeong" title="사령' : "") + '">' + ch + "</span>";
     }).join("") + "</span></td>";
   });
-  h += row("십이운성", function (l) { return '<td class="sib">' + natal[l].stage + "</td>"; });
-  h += "</table>";
+  h += row(function (l) { return '<td class="sib' + (l === "일" ? " day" : "") + '">' + natal[l].stage + "</td>"; });
+  if (timeUnknown) {
+    // 시간을 모르면 시주 칸의 제목만 남깁니다.
+    h = h.replace("<th>시주</th>", "<th>시주<br><small>모름</small></th>");
+  }
   el("natal").innerHTML = h;
 
   var day = Math.floor(sar.days) + 1;
-  el("saryeongNote").innerHTML = Site.chip(S_HA[sar.stem], S_ELEM[sar.stem], "sm saryeong") +
-    "<span>월지 지장간에서 테두리를 두른 글자가 사령입니다. " + sar.jeol + " 절입 후 " + day + "일째에 태어나 " +
-    S_KO[sar.stem] + "(" + S_HA[sar.stem] + ")" + Site.josa(S_KO[sar.stem], "이", "가") + " 사령입니다.</span>";
+  el("saryeongNote").innerHTML = "월지 지장간에서 <b>" + S_HA[sar.stem] + "</b> 글자가 사령이에요. " +
+    sar.jeol + " 절입 후 " + day + "일째에 태어나 " + S_KO[sar.stem] + "(" + S_HA[sar.stem] + ")" +
+    Site.josa(S_KO[sar.stem], "이", "가") + " 그달을 맡고 있어요.";
+}
+
+// ---- 오행 분포 ----
+function renderOhaeng(natal, timeUnknown) {
+  var cnt = [0, 0, 0, 0, 0], total = 0;
+  ORDER.forEach(function (l) {
+    if (timeUnknown && l === "시") return;
+    cnt[natal[l].stem_elem]++; cnt[natal[l].branch_elem]++; total += 2;
+  });
+  el("ohaengCap").textContent = timeUnknown
+    ? "시주를 뺀 원국 여섯 글자를 오행으로 나눠 센 것이에요."
+    : "원국 여덟 글자(천간 넷, 지지 넷)를 오행으로 나눠 센 것이에요.";
+  var COLORS = ["var(--mok)", "var(--hwa)", "var(--to)", "#B7BDC7", "var(--su)"];
+  el("ohaengBars").innerHTML = cnt.map(function (c, i) {
+    return '<div class="bar-row"><span class="name">' + ELEM_NAME[i] + "(" + ELEM_HAN[i] + ')</span>' +
+      '<span class="track"><span class="fill" style="display:block;width:' + (c / total * 100) + "%;background:" + COLORS[i] + '"></span></span>' +
+      '<span class="num">' + c + "</span></div>";
+  }).join("");
 }
 
 // ---- 대운·세운 칸 하나 ----
 function lunCard(o, top, opts) {
   opts = opts || {};
   var tag = opts.button ? "button" : "div";
-  return "<" + tag + ' class="lun' + (opts.now ? " now" : "") + '"' +
-    (opts.button ? ' type="button" data-idx="' + opts.idx + '" aria-expanded="false"' : "") + ' role="listitem">' +
-    '<div class="top">' + top + "</div>" +
-    '<div class="sib">' + o.ten_stem + "</div>" +
-    '<div class="gj">' + Site.chip(o.stem_han, o.stem_elem) + Site.chip(o.branch_han, o.branch_elem) + "</div>" +
-    '<div class="sib">' + o.ten_branch + "</div>" +
-    '<div class="st">' + o.stage + "</div>" +
-    (opts.now ? '<span class="badge">지금</span>' : "") +
+  return "<" + tag + ' class="lun' + (opts.cls ? " " + opts.cls : "") + '"' +
+    (opts.button ? ' type="button" data-idx="' + opts.idx + '" aria-pressed="false"' : "") + ">" +
+    '<span class="top">' + top + "</span>" +
+    '<span class="sib">' + o.ten_stem + "</span>" +
+    Site.chip(o.stem_han, o.stem_elem) + Site.chip(o.branch_han, o.branch_elem) +
+    '<span class="sib">' + o.ten_branch + "</span>" +
+    (opts.now ? '<span class="now">' + opts.now + "</span>" : "") +
     "</" + tag + ">";
+}
+
+// 가로 띠 안에서 고른 칸이 가운데 오도록 옆으로만 밀어 줍니다 (화면 전체는 움직이지 않음).
+function centerIn(strip, sel) {
+  var cur = strip.querySelector(sel);
+  if (!cur) return;
+  var s = strip.getBoundingClientRect(), c = cur.getBoundingClientRect();
+  strip.scrollLeft += (c.left + c.width / 2) - (s.left + s.width / 2);
 }
 
 var daeun = [];
 
 function renderDaeun(data) {
   daeun = data.daeun;
-  el("daeunCaption").textContent = data.direction + " · 대운수 " + data.daeun_num + " · 대운을 누르면 그 안의 세운 열 해가 아래에 펼쳐집니다.";
-  // 원본 만세력처럼 나이 많은 대운이 왼쪽, 어린 대운이 오른쪽에 옵니다.
-  var html = "";
-  for (var i = daeun.length - 1; i >= 0; i--) {
-    var d = daeun[i];
-    var now = d.year_from <= THIS_YEAR && THIS_YEAR <= d.year_to;
-    html += lunCard(d, d.age + "세", { button: true, idx: i, now: now });
-  }
-  el("daeunStrip").innerHTML = html;
-  el("seunPanel").hidden = true;
-  centerNow(el("daeunStrip"));
+  el("daeunCaption").textContent = data.direction + " · 대운수 " + data.daeun_num + " · 대운을 누르면 아래 세운이 바뀌어요";
+  // 오른쪽에서 왼쪽으로: 첫 대운이 오른쪽 끝 (띠가 row-reverse 라 DOM 순서대로 넣으면 됩니다)
+  el("daeunStrip").innerHTML = daeun.map(function (d, i) {
+    return lunCard(d, d.age + "세", { button: true, idx: i });
+  }).join("");
+  var cur = 0;
+  for (var i = 0; i < daeun.length; i++) if (daeun[i].year_from <= THIS_YEAR && THIS_YEAR <= daeun[i].year_to) cur = i;
+  if (THIS_YEAR > daeun[daeun.length - 1].year_to) cur = daeun.length - 1;
+  selectDaeun(cur);
 }
 
-function toggleDaeun(idx) {
+function selectDaeun(idx) {
   var btns = el("daeunStrip").querySelectorAll(".lun");
-  var target = el("daeunStrip").querySelector('.lun[data-idx="' + idx + '"]');
-  var wasOpen = target.classList.contains("selected");
-  for (var i = 0; i < btns.length; i++) { btns[i].classList.remove("selected"); btns[i].setAttribute("aria-expanded", "false"); }
-  if (wasOpen) { el("seunPanel").hidden = true; return; }
-  target.classList.add("selected");
-  target.setAttribute("aria-expanded", "true");
-
+  for (var i = 0; i < btns.length; i++) {
+    var on = Number(btns[i].getAttribute("data-idx")) === idx;
+    btns[i].classList.toggle("selected", on);
+    btns[i].setAttribute("aria-pressed", on ? "true" : "false");
+  }
   var d = daeun[idx];
   el("seunCaption").textContent = d.age + "세 대운 (" + d.year_from + "~" + d.year_to + "년) 안의 세운";
-  var html = "";
-  for (var k = d.seun.length - 1; k >= 0; k--) {
-    var s = d.seun[k];
-    html += lunCard(s, s.year, { now: s.year === THIS_YEAR });
-  }
-  el("seunStrip").innerHTML = html;
-  el("seunPanel").hidden = false;
-  centerNow(el("seunStrip"));
+  el("seunStrip").innerHTML = d.seun.map(function (s) {
+    var now = s.year === THIS_YEAR;
+    return lunCard(s, s.year, { cls: now ? "this-year" : "", now: now ? "올해" : "" });
+  }).join("");
+  centerIn(el("daeunStrip"), ".lun.selected");
+  centerIn(el("seunStrip"), ".lun.this-year");
 }
 
 el("daeunStrip").addEventListener("click", function (e) {
   var b = e.target.closest(".lun");
-  if (b) toggleDaeun(Number(b.getAttribute("data-idx")));
+  if (b) selectDaeun(Number(b.getAttribute("data-idx")));
 });
 
-// ---- 올해 앞뒤 세운 ----
-function renderYears(ds) {
-  var html = "";
-  for (var y = THIS_YEAR + 5; y >= THIS_YEAR - 5; y--) {
-    var o = ManseEngine.mod(y - 4, 10), b = ManseEngine.mod(y - 4, 12);
-    html += lunCard(cell(ds, o, b), y, { now: y === THIS_YEAR });
-  }
-  el("yearStrip").innerHTML = html;
-  centerNow(el("yearStrip"));
-}
-
 // ---- 풀이 (data/ 파일) ----
-function renderReadings(natal) {
-  var dayStem = natal["일"].stem_ko;
+function renderReadings(natal, timeUnknown) {
+  var ds = natal["일"];
   Site.loadData("ilgan").then(function (d) {
-    var box = el("readIlgan"); box.innerHTML = "";
-    box.appendChild(Site.readingBlock(dayStem + "(" + natal["일"].stem_han + ") 일간", Site.textOf(d, dayStem), "data/ilgan.json"));
+    var card = el("ilganCard"), text = Site.textOf(d, ds.stem_ko);
+    card.innerHTML = "<h2>" + ds.stem_ko + " 일간 이야기</h2>";
+    card.appendChild(Site.readingBlock(ds.stem_ko + "(" + ds.stem_han + ")" + ELEM_NAME[ds.stem_elem] + " 일간", text, "data/ilgan.json"));
   });
+  var cols = ["년", "월", "일", "시"].filter(function (l) { return !(timeUnknown && l === "시"); });
   Site.loadData("jiji").then(function (d) {
     var box = el("readJiji"); box.innerHTML = "";
-    ["년", "월", "일", "시"].forEach(function (l) {
+    cols.forEach(function (l) {
       var b = natal[l].branch_ko;
       box.appendChild(Site.readingBlock(l + "지 " + b + "(" + natal[l].branch_han + ")", Site.textOf(d, b), "data/jiji.json"));
     });
@@ -215,46 +237,55 @@ function renderReadings(natal) {
   Site.loadData("sipsung").then(function (d) {
     var box = el("readSipsung"); box.innerHTML = "";
     var seen = [];
-    ["년", "월", "일", "시"].forEach(function (l) {
+    cols.forEach(function (l) {
       [natal[l].ten_stem, natal[l].ten_branch].forEach(function (t) {
         if (t !== "일간" && seen.indexOf(t) < 0) seen.push(t);
       });
     });
-    var TEN_ORDER = ["비견", "겁재", "식신", "상관", "편재", "정재", "편관", "정관", "편인", "정인"];
-    seen.sort(function (a, b) { return TEN_ORDER.indexOf(a) - TEN_ORDER.indexOf(b); });
+    seen.sort(function (a, b) { return TEN.indexOf(a) - TEN.indexOf(b); });
     seen.forEach(function (t) { box.appendChild(Site.readingBlock(t, Site.textOf(d, t), "data/sipsung.json")); });
   });
 }
 
 // ---- 입력 처리 ----
-function showError(msg) { el("errorBox").textContent = msg; el("errorBox").hidden = false; }
+function showError(msg) { el("errorBox").textContent = msg; el("errorBox").hidden = false; window.scrollTo(0, 0); }
 
-function run(birth12, cal, gender) {
+function run(s) {
   var r;
-  try { r = computeChart(birth12, cal, gender); } catch (err) { showError(err.message); return false; }
-  var data = r.data;
-  el("summary").textContent = "입력 " + data.input + " → 양력 " + data.solar + " · " + data.gender + " · 절기 " + data.jeol;
-  renderNatal(data.natal, r.saryeong);
-  renderDaeun(data);
-  renderYears(r.sj.d[0]);
-  renderReadings(data.natal);
+  try { r = computeChart(s.birth12, s.cal, s.gender); } catch (err) { showError(err.message); return false; }
+  var data = r.data, ds = data.natal["일"];
+  el("say").textContent = "일간은 " + ds.stem_ko + "(" + ds.stem_han + ")" + ELEM_NAME[ds.stem_elem] +
+    Site.josa(ELEM_NAME[ds.stem_elem], "이에요", "예요");
+  el("summary").textContent = Site.birthLine(s) + (s.cal !== "양력" ? " → 양력 " + data.solar.slice(0, 10) : "") +
+    (s.timeUnknown ? " · 계산은 낮 12시 기준" : "");
+  renderNatal(data.natal, r.saryeong, s.timeUnknown);
+  renderOhaeng(data.natal, s.timeUnknown);
   el("formCard").hidden = true;
   el("result").hidden = false;
-  centerNow(el("daeunStrip"));
-  centerNow(el("yearStrip"));
+  renderDaeun(data);   // 보이게 한 다음에 그려야 "지금" 칸을 가운데로 옮길 수 있습니다.
+  renderReadings(data.natal, s.timeUnknown);
   window.scrollTo(0, 0);
   return true;
 }
 
+el("noTime").addEventListener("change", function () {
+  el("btime").disabled = this.checked;
+  if (this.checked) el("btime").value = "";
+});
+
 el("birthForm").addEventListener("submit", function (e) {
   e.preventDefault();
   el("errorBox").hidden = true;
-  var birth12 = el("birth12").value.trim();
+  var date = el("bdate").value.replace(/\D/g, "");
+  var noTime = el("noTime").checked;
+  var time = noTime ? "1200" : el("btime").value.replace(/\D/g, "");
   var cal = document.querySelector('input[name="cal"]:checked').value;
   var g = document.querySelector('input[name="gender"]:checked');
-  if (!birth12) { showError("생년월일시를 넣어 주세요."); return; }
+  if (date.length !== 8) { showError("생년월일을 8자리 숫자로 넣어 주세요. 예: 19900515"); return; }
+  if (time.length !== 4) { showError("태어난 시간을 4자리로 넣거나, '시간 모름'을 골라 주세요. 예: 0930"); return; }
   if (!g) { showError("성별을 골라 주세요."); return; }
-  if (run(birth12, cal, g.value)) Site.remember({ birth12: birth12, cal: cal, gender: g.value });
+  var s = { birth12: date + time, cal: cal, gender: g.value, timeUnknown: noTime };
+  if (run(s)) Site.remember(s);
 });
 
 el("again").addEventListener("click", function () {
@@ -263,13 +294,16 @@ el("again").addEventListener("click", function () {
   window.scrollTo(0, 0);
 });
 
-// 지난번 입력값을 미리 채워 둡니다.
+// 저장된 생일이 있으면 미리 채우고, 주소에 #result 가 있으면 바로 결과를 보여 줍니다.
 (function () {
-  var last = Site.recall();
-  if (!last) return;
-  el("birth12").value = last.birth12 || "";
-  var c = document.querySelector('input[name="cal"][value="' + last.cal + '"]'); if (c) c.checked = true;
-  var g = document.querySelector('input[name="gender"][value="' + last.gender + '"]'); if (g) g.checked = true;
+  var s = Site.recall();
+  if (!s || !s.birth12) return;
+  el("bdate").value = s.birth12.slice(0, 8);
+  if (s.timeUnknown) { el("noTime").checked = true; el("btime").disabled = true; }
+  else el("btime").value = s.birth12.slice(8, 12);
+  var c = document.querySelector('input[name="cal"][value="' + s.cal + '"]'); if (c) c.checked = true;
+  var g = document.querySelector('input[name="gender"][value="' + s.gender + '"]'); if (g) g.checked = true;
+  if (location.hash === "#result") run(s);
 })();
 </script>
 </body>

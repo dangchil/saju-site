@@ -3,19 +3,58 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#f6f5f1">
-<title>상담 · 사주 노트</title>
+<meta name="theme-color" content="#FFF7EC">
+<link rel="icon" href="images/mascot.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=Jua&display=swap">
 <link rel="stylesheet" href="css/style.css">
+<title>상담 · 사주 노트</title>
 </head>
-<body data-tab="chat">
+<body data-tab="chat" class="lilac-page">
 <main class="app">
-  <header class="topbar"><h1>상담</h1></header>
-  <section class="soon">
-    <div class="char-slot" aria-label="캐릭터 그림 자리">캐릭터<br>자리</div>
-    <h2>상담은 준비 중입니다</h2>
-    <p>조금만 기다려 주세요. 준비가 되면 이곳에서 안내해 드리겠습니다.</p>
-  </section>
+  <!-- 상담은 아직 작동하지 않는 화면 미리보기입니다. -->
+  <header class="topbar">
+    <img class="mascot" data-mascot alt="" style="width:44px;height:44px">
+    <h1 style="font-size:20px"><span id="charName">[캐릭터 이름]</span><span id="charJosa">과</span> 이야기</h1>
+    <span class="tag violet">오늘 무료 1회</span>
+  </header>
+
+  <div class="notice"><span data-icon="info"></span><span>상담은 곧 열려요 · 지금은 화면 미리보기예요</span></div>
+
+  <div class="chat-log">
+    <div class="talk">
+      <img class="mascot" data-mascot alt="" style="width:40px;height:40px">
+      <p class="bubble">안녕하세요. 내 원국을 함께 보면서 이야기 나눠요. 아래에서 궁금한 것을 골라 보세요.</p>
+    </div>
+    <div class="suggest" id="suggest">
+      <button type="button">올해 흐름이 궁금해요</button>
+      <button type="button">내 성향을 알고 싶어요</button>
+      <button type="button">일이 잘 안 풀려요</button>
+    </div>
+  </div>
+
+  <div class="composer-wrap">
+    <p class="care">마음이 많이 힘들 때는 가까운 사람이나 전문 상담과도 꼭 이야기해 주세요.</p>
+    <form class="composer" onsubmit="return false">
+      <label class="sr-only" for="msg">보낼 말</label>
+      <input id="msg" type="text" placeholder="상담이 열리면 여기에 쓸 수 있어요" disabled>
+      <button type="submit" disabled aria-label="보내기" data-icon="send"></button>
+    </form>
+  </div>
 </main>
 <script src="js/common.js"></script>
+<script>
+Site.loadData("site").then(function (d) {
+  var n = Site.textOf(d, "캐릭터_이름");
+  var nameEl = document.getElementById("charName");
+  if (Site.isPending(n)) { nameEl.classList.add("placeholder"); return; }
+  nameEl.textContent = n;
+  document.getElementById("charJosa").textContent = Site.josa(n, "과", "와");
+});
+document.getElementById("suggest").addEventListener("click", function (e) {
+  if (e.target.closest("button")) Site.toast("상담은 곧 열려요");
+});
+</script>
 </body>
 </html>
