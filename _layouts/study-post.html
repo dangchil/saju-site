@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#f6f5f1">
+<title>{{ page.title | default: "사주 공부" }} · 사주 노트</title>
+<link rel="stylesheet" href="../../css/style.css">
+</head>
+<body data-tab="study">
+<!-- 사주 공부 글 한 편의 틀입니다. study/posts/ 안의 .md 파일이 이 틀에 담겨 보입니다. -->
+<main class="app">
+  <header class="topbar"><a class="back" href="../index.html" aria-label="글 목록으로">‹</a><h1>사주 공부</h1></header>
+  <article class="card article">
+    {{ content }}
+  </article>
+</main>
+<script src="../../js/common.js"></script>
+</body>
+</html>

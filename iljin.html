@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#f6f5f1">
+<title>오늘의 일진 · 사주 노트</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body data-tab="home">
+<main class="app">
+  <header class="topbar"><a class="back" href="index.html" aria-label="홈으로">‹</a><h1>오늘의 일진</h1></header>
+
+  <section class="card">
+    <h2 id="todayTitle">오늘</h2>
+    <p class="caption">한국 시각 기준, 자정에 날이 바뀝니다.</p>
+    <div class="today-ganji" id="todayGanji"></div>
+    <div id="readIlju"></div>
+  </section>
+
+  <section class="card">
+    <h2>나에게 오늘은</h2>
+    <p class="caption">생년월일시를 넣으면 오늘의 일간이 내 일간에게 어떤 십성인지 계산합니다.</p>
+    <div class="error" id="errorBox" hidden></div>
+    <form id="birthForm" autocomplete="off">
+      <label class="field" for="birth12">생년월일시</label>
+      <input type="tel" id="birth12" inputmode="numeric" maxlength="12" placeholder="예: 200708031800">
+      <div class="hint">12자리 숫자, 시각은 24시간제입니다.</div>
+      <label class="field">양력 · 음력 · 윤달</label>
+      <div class="seg">
+        <label><input type="radio" name="cal" value="양력" checked><span>양력</span></label>
+        <label><input type="radio" name="cal" value="음력"><span>음력</span></label>
+        <label><input type="radio" name="cal" value="윤달"><span>윤달</span></label>
+      </div>
+      <button class="btn" type="submit">계산하기</button>
+    </form>
+
+    <div id="result" hidden>
+      <div class="relation" id="relation"></div>
+      <p class="big-word" id="tenWord"></p>
+      <p class="caption" style="text-align:center" id="tenSub"></p>
+      <div id="readIljin"></div>
+      <div id="readIlgan"></div>
+    </div>
+  </section>
+</main>
+
+<script src="js/manse.js"></script>
+<script src="js/saju-extra.js"></script>
+<script src="js/common.js"></script>
+<script>
+function el(id) { return document.getElementById(id); }
+
+var T = todayKST();
+var TP = dayPillar(T.y, T.m, T.d);   // [천간, 지지]
+var WEEK = "일월화수목금토";
+var weekday = WEEK[new Date(Date.UTC(T.y, T.m - 1, T.d)).getUTCDay()];
+
+el("todayTitle").textContent = T.y + "년 " + T.m + "월 " + T.d + "일 (" + weekday + ")";
+el("todayGanji").innerHTML =
+  "<div>" + Site.chip(S_HA[TP[0]], S_ELEM[TP[0]], "lg") + '<span class="ko">' + S_KO[TP[0]] + "</span></div>" +
+  "<div>" + Site.chip(B_HA[TP[1]], B_ELEM[TP[1]], "lg") + '<span class="ko">' + B_KO[TP[1]] + "</span></div>";
+
+var todayName = S_KO[TP[0]] + B_KO[TP[1]];
+Site.loadData("ilju").then(function (d) {
+  el("readIlju").appendChild(Site.readingBlock("오늘의 일주 " + todayName + "(" + S_HA[TP[0]] + B_HA[TP[1]] + ")", Site.textOf(d, todayName), "data/ilju.json"));
+});
+
+function showError(msg) { el("errorBox").textContent = msg; el("errorBox").hidden = false; }
+
+function run(birth12, cal) {
+  var data;
+  // 성별은 일간 계산에 영향이 없어 "남"으로 고정해 둡니다.
+  try { data = chartData(birth12, cal, "남"); } catch (err) { showError(err.message); return false; }
+  var my = S_HA.indexOf(data.natal["일"].stem_han);
+  var ten = tenGod(my, TP[0]);
+  var tenB = tenGod(my, B_MAIN[TP[1]]);
+
+  el("relation").innerHTML =
+    '<div><div class="who">오늘 일간</div>' + Site.chip(S_HA[TP[0]], S_ELEM[TP[0]]) + "</div>" +
+    '<div class="arrow">→</div>' +
+    '<div><div class="who">내 일간</div>' + Site.chip(S_HA[my], S_ELEM[my]) + "</div>";
+  el("tenWord").textContent = ten;
+  el("tenSub").textContent = "오늘의 일간 " + S_KO[TP[0]] + Site.josa(S_KO[TP[0]], "은", "는") + " 내 일간 " + S_KO[my] + "에게 " + ten +
+    "입니다. 오늘의 일지 " + B_KO[TP[1]] + "의 본기는 " + tenB + "입니다.";
+
+  Site.loadData("iljin").then(function (d) {
+    var box = el("readIljin"); box.innerHTML = "";
+    box.appendChild(Site.readingBlock("오늘이 나에게 " + ten + "인 날", Site.textOf(d, ten), "data/iljin.json"));
+  });
+  Site.loadData("ilgan").then(function (d) {
+    var box = el("readIlgan"); box.innerHTML = "";
+    box.appendChild(Site.readingBlock("내 일간 " + S_KO[my] + "(" + S_HA[my] + ")", Site.textOf(d, S_KO[my]), "data/ilgan.json"));
+  });
+
+  el("birthForm").hidden = true;
+  el("result").hidden = false;
+  return true;
+}
+
+el("birthForm").addEventListener("submit", function (e) {
+  e.preventDefault();
+  el("errorBox").hidden = true;
+  var birth12 = el("birth12").value.trim();
+  var cal = document.querySelector('input[name="cal"]:checked').value;
+  if (!birth12) { showError("생년월일시를 넣어 주세요."); return; }
+  var last = Site.recall() || {};
+  if (run(birth12, cal)) Site.remember({ birth12: birth12, cal: cal, gender: last.gender });
+});
+
+(function () {
+  var last = Site.recall();
+  if (!last) return;
+  el("birth12").value = last.birth12 || "";
+  var c = document.querySelector('input[name="cal"][value="' + last.cal + '"]'); if (c) c.checked = true;
+})();
+</script>
+</body>
+</html>
