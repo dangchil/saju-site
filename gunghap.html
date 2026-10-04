@@ -1,0 +1,306 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#FFF7EC">
+<link rel="icon" href="images/mascot.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=Jua&display=swap">
+<link rel="stylesheet" href="css/style.css?v=20261004.4">
+<title>궁합 · 사주 노트</title>
+</head>
+<body data-tab="home">
+<!-- 궁합 화면. 근거: 사이트풀이초안/궁합/궁합원칙_확정.md
+     계산은 js/manse.js(원국)와 js/gunghap.js(합·충 판정), 풀이 문장은 data/gunghap.json 에서 읽습니다. -->
+<main class="app">
+  <header class="topbar">
+    <a class="icon-btn plain" href="index.html" aria-label="홈으로" data-icon="back"></a>
+    <h1>궁합</h1>
+  </header>
+
+  <!-- 입력 -->
+  <section class="card" id="formCard">
+    <div class="error" id="errorBox" hidden></div>
+    <form id="ghForm" autocomplete="off" novalidate>
+      <span class="field-label" id="relLab">두 사람의 관계</span>
+      <div class="pills" role="radiogroup" aria-labelledby="relLab">
+        <label class="pill"><input type="radio" name="rel" value="연인" checked>연인·부부</label>
+        <label class="pill"><input type="radio" name="rel" value="가족">가족</label>
+        <label class="pill"><input type="radio" name="rel" value="친구">친구·동료</label>
+      </div>
+      <div id="persons"></div>
+      <button class="btn" type="submit">궁합 보기</button>
+    </form>
+    <p class="caption" style="margin:12px 0 0">내 생일은 이 기기에 저장된 값을 불러와요. 상대의 생일은 저장하지 않아요.</p>
+  </section>
+
+  <!-- 결과 -->
+  <div id="result" hidden>
+    <section class="card">
+      <h2>두 사람의 원국</h2>
+      <p class="caption" id="birthCap"></p>
+      <div class="gh-pair" id="pair"></div>
+    </section>
+
+    <section class="card">
+      <h2>맞닿은 자리와 걸리는 자리</h2>
+      <p class="caption">같은 자리끼리 견줘 엔진이 계산한 결과예요.</p>
+      <table class="gh-rel" id="relTable"></table>
+    </section>
+
+    <section class="card butter" id="conclusion"></section>
+
+    <section class="card">
+      <h2>자리별 풀이</h2>
+      <div id="readPos"></div>
+    </section>
+
+    <section class="card" id="relCard" hidden>
+      <h2>관계별 풀이</h2>
+      <div id="readRel"></div>
+    </section>
+
+    <section class="card" id="johuCard" hidden>
+      <h2>조후 (온도)</h2>
+      <p class="caption" id="johuCap"></p>
+      <div id="readJohu"></div>
+    </section>
+
+    <section class="card" id="fillCard" hidden>
+      <h2>서로 채워 주는 것</h2>
+      <div id="readFill"></div>
+    </section>
+
+    <section class="card" id="familyCard" hidden>
+      <h2>가족으로 볼 때</h2>
+      <div id="readFamily"></div>
+    </section>
+
+    <div class="note" id="closing"></div>
+    <button class="btn ghost" type="button" id="again">다시 입력하기</button>
+  </div>
+</main>
+
+<script src="js/manse.js?v=20261004"></script>
+<script src="js/saju-extra.js?v=20261004"></script>
+<script src="js/gunghap.js?v=20261004.4"></script>
+<script src="js/common.js?v=20261004"></script>
+<script>
+var ORDER = ["시", "일", "월", "년"];
+var WHO = ["나", "상대"];
+var HAP = Gunghap.HAP_KINDS;
+var REL_KEY = { 육합: "합_육합", 삼합: "합_삼합", 방합: "합_방합", 충: "걸림_충", 원진: "걸림_원진", 귀문: "걸림_귀문", 형: "걸림_형", 파: "걸림_파", 격각: "걸림_격각" };
+var POS_KEY = { 년: "자리_년지", 월: "자리_월지", 일: "자리_일지", 시: "자리_시지" };
+var COMBO_KEY = { 천합지합: "조합_천합지합", 천합지충: "조합_천합지충", 천합원진: "조합_천합원진", 지지만합: "조합_지지만합" };
+function el(id) { return document.getElementById(id); }
+
+// ---- 입력 칸 두 벌 (만세력 입력과 같은 방식) ----
+el("persons").innerHTML = WHO.map(function (w, i) {
+  var p = "p" + i;
+  return '<fieldset class="gh-person"><legend>' + w + '</legend>' +
+    '<span class="field-label" id="' + p + 'cal">양력 · 음력</span>' +
+    '<div class="pills" role="radiogroup" aria-labelledby="' + p + 'cal">' +
+    ["양력", "음력", "윤달"].map(function (c, k) {
+      return '<label class="pill"><input type="radio" name="' + p + 'c" value="' + c + '"' + (k === 0 ? " checked" : "") + ">" + (c === "윤달" ? "음력 윤달" : c) + "</label>";
+    }).join("") + "</div>" +
+    '<label class="field-label" for="' + p + 'd">생년월일</label>' +
+    '<input class="input" type="text" id="' + p + 'd" inputmode="numeric" maxlength="8" placeholder="예: 19900515">' +
+    '<label class="field-label" for="' + p + 't">태어난 시간</label>' +
+    '<div class="time-row"><input class="input" type="text" id="' + p + 't" inputmode="numeric" maxlength="4" placeholder="예: 0930">' +
+    '<label class="check"><input type="checkbox" id="' + p + 'n">시간 모름</label></div>' +
+    '<span class="field-label" id="' + p + 'g">성별</span>' +
+    '<div class="pills" role="radiogroup" aria-labelledby="' + p + 'g">' +
+    '<label class="pill"><input type="radio" name="' + p + 'gg" value="여">여자</label>' +
+    '<label class="pill"><input type="radio" name="' + p + 'gg" value="남">남자</label></div>' +
+    "</fieldset>";
+}).join("");
+[0, 1].forEach(function (i) {
+  el("p" + i + "n").addEventListener("change", function () {
+    el("p" + i + "t").disabled = this.checked;
+    if (this.checked) el("p" + i + "t").value = "";
+  });
+});
+function fill(i, s) {
+  el("p" + i + "d").value = s.birth12.slice(0, 8);
+  if (s.timeUnknown) { el("p" + i + "n").checked = true; el("p" + i + "t").disabled = true; }
+  else el("p" + i + "t").value = s.birth12.slice(8, 12);
+  var c = document.querySelector('input[name="p' + i + 'c"][value="' + s.cal + '"]'); if (c) c.checked = true;
+  var g = document.querySelector('input[name="p' + i + 'gg"][value="' + s.gender + '"]'); if (g) g.checked = true;
+}
+function readPerson(i) {
+  var date = el("p" + i + "d").value.replace(/\D/g, "");
+  var noTime = el("p" + i + "n").checked;
+  var time = noTime ? "1200" : el("p" + i + "t").value.replace(/\D/g, "");
+  var cal = document.querySelector('input[name="p' + i + 'c"]:checked').value;
+  var g = document.querySelector('input[name="p' + i + 'gg"]:checked');
+  var who = WHO[i];
+  if (date.length !== 8) throw new Error(who + ": 생년월일을 8자리 숫자로 넣어 주세요. 예: 19900515");
+  if (time.length !== 4) throw new Error(who + ": 태어난 시간을 4자리로 넣거나, '시간 모름'을 골라 주세요. 예: 0930");
+  if (!g) throw new Error(who + ": 성별을 골라 주세요.");
+  return { birth12: date + time, cal: cal, gender: g.value, timeUnknown: noTime };
+}
+function showError(msg) { el("errorBox").textContent = msg; el("errorBox").hidden = false; window.scrollTo(0, 0); }
+
+// ---- 그리기 ----
+function chipOf(natal, l, kind) {
+  var c = natal[l];
+  return kind === "s" ? Site.chip(c.stem_han, c.stem_elem, "sm") : Site.chip(c.branch_han, c.branch_elem, "sm");
+}
+function miniTable(i, natal, unknown) {
+  var cols = ORDER.map(function (l) {
+    if (unknown && l === "시") return '<td class="sib">·</td>';
+    return null;
+  });
+  var row = function (kind) {
+    return "<tr>" + ORDER.map(function (l, k) { return cols[k] || "<td" + (l === "일" ? ' class="day"' : "") + ">" + chipOf(natal, l, kind) + "</td>"; }).join("") + "</tr>";
+  };
+  return '<div class="gh-one"><div class="who">' + WHO[i] + "</div>" +
+    '<table class="mini"><tr>' + ORDER.map(function (l) { return "<th>" + l + "</th>"; }).join("") + "</tr>" + row("s") + row("b") + "</table></div>";
+}
+function relChips(rels) {
+  if (!rels.length) return '<span class="muted">—</span>';
+  return rels.map(function (r) {
+    var cls = HAP.indexOf(r) >= 0 ? "hap" : (r === "파" ? "pa" : "geol");
+    return '<span class="rel ' + cls + '">' + r + "</span>";
+  }).join("");
+}
+function block(d, key, title) { return Site.readingBlock(title || "", Site.textOf(d, key), "data/gunghap.json"); }
+function text(d, key) { return Site.textOf(d, key); }
+
+function render(people, rel, R, d) {
+  var A = people[0], B = people[1];
+  el("birthCap").textContent = "나: " + Site.birthLine(A.s) + " / 상대: " + Site.birthLine(B.s);
+  el("pair").innerHTML = miniTable(0, A.natal, A.s.timeUnknown) + miniTable(1, B.natal, B.s.timeUnknown);
+
+  // 맞닿은 자리와 걸리는 자리
+  var ds = [A.natal["일"], B.natal["일"]];
+  var h = '<tr><th class="pos">일간</th><td>' + Site.chip(ds[0].stem_han, ds[0].stem_elem, "sm") + Site.chip(ds[1].stem_han, ds[1].stem_elem, "sm") +
+    "</td><td>" + (R.stemHap ? '<span class="rel hap">천간합</span>' : '<span class="muted">—</span>') + "</td></tr>";
+  ["년", "월", "일", "시"].forEach(function (l) {
+    var p = R.positions[["년", "월", "일", "시"].indexOf(l)];
+    h += '<tr><th class="pos">' + l + "지</th>";
+    if (p.skip) { h += '<td colspan="2" class="muted">시간을 몰라 보지 않아요</td></tr>'; return; }
+    h += "<td>" + chipOf(A.natal, l, "b") + chipOf(B.natal, l, "b") + "</td><td>" + relChips(p.rels) + "</td></tr>";
+  });
+  h += '<tr><th class="pos">조후</th><td colspan="2">나는 ' + R.temp[0].kind + " 원국, 상대는 " + R.temp[1].kind + " 원국" +
+    (R.johu ? ' <span class="rel hap">온도를 채움</span>' : "") + "</td></tr>";
+  el("relTable").innerHTML = h;
+
+  // 큰 결론 (확정본 2장)
+  var con = el("conclusion"); con.innerHTML = "<h2>큰 결론</h2>";
+  if (R.combo) {
+    var key = COMBO_KEY[R.combo];
+    con.appendChild(Site.readingBlock(Site.textOf(d, key, "제목"), text(d, key), "data/gunghap.json"));
+    if (R.combo === "천합지충" || R.combo === "천합원진") con.appendChild(block(d, "조합_천간합특징"));
+  } else {
+    var p = document.createElement("p");
+    p.className = "muted";
+    p.textContent = "일간과 일지로 본 네 가지 조합에는 바로 해당하지 않아요. 아래 자리별 풀이를 함께 보세요.";
+    con.appendChild(p);
+  }
+  if (R.stemHap) con.appendChild(block(d, "바탕_천간합"));
+  con.appendChild(block(d, "바탕_함께"));
+
+  // 자리별 풀이 (확정본 4장, 중요한 자리부터)
+  var box = el("readPos"); box.innerHTML = "";
+  box.appendChild(block(d, "자리_중요도"));
+  var anyHapPos = false, found = {};
+  ["일", "시", "월", "년"].forEach(function (l) {
+    var p = R.positions[["년", "월", "일", "시"].indexOf(l)];
+    if (p.skip || !p.rels.length) return;
+    var hasHap = p.rels.some(function (r) { return HAP.indexOf(r) >= 0; });
+    if (hasHap) anyHapPos = true;
+    p.rels.forEach(function (r) { found[r] = true; });
+    var t = text(d, POS_KEY[l]);
+    if (l === "일" && hasHap) t += "\n" + text(d, "바탕_지지합") + "\n" + text(d, "바탕_리듬");
+    box.appendChild(Site.readingBlock(l + "지 · " + p.rels.join(" · "), t, "data/gunghap.json"));
+  });
+  if (anyHapPos) box.appendChild(block(d, "자리_인연"));
+  if (!Object.keys(found).length) {
+    var q = document.createElement("p"); q.className = "muted";
+    q.textContent = "같은 자리끼리 합이나 걸리는 관계가 없어요.";
+    box.appendChild(q);
+  }
+
+  // 관계별 풀이 (확정본 5장·6장, 나온 관계마다 한 번씩)
+  var rb = el("readRel"); rb.innerHTML = "";
+  var hapKinds = Gunghap.REL_ORDER.filter(function (r) { return found[r] && HAP.indexOf(r) >= 0; });
+  Gunghap.REL_ORDER.forEach(function (r) {
+    if (!found[r] || r === "파") return;          // 파는 확정본대로 자리표에 표시만 한다
+    rb.appendChild(block(d, REL_KEY[r], r));
+  });
+  if (hapKinds.length >= 2) rb.appendChild(block(d, "합_순서"));
+  if (R.unlock[0] || R.unlock[1]) rb.appendChild(block(d, "걸림_풀어줌", "불안한 자리를 풀어 주는 합"));
+  el("relCard").hidden = !rb.children.length;
+
+  // 조후 (확정본 3장)
+  el("johuCard").hidden = !R.johu;
+  if (R.johu) {
+    el("johuCap").textContent = "원국 글자 가운데 불(火)과 물(水)의 수, 태어난 달로 온도를 간단히 가늠했어요. 나는 " +
+      R.temp[0].kind + " 원국, 상대는 " + R.temp[1].kind + " 원국이에요.";
+    var jb = el("readJohu"); jb.innerHTML = "";
+    jb.appendChild(block(d, "조후_1"));
+    jb.appendChild(block(d, "조후_2"));
+    if (found["원진"] || found["충"]) jb.appendChild(block(d, "조후_3"));
+    jb.appendChild(block(d, "조후_정리"));
+  }
+
+  // 서로 채워 주는 십성 (확정본 7장, 한두 문장)
+  var lines = [];
+  if (R.fill[0].length) lines.push("나에게 없는 " + R.fill[0].join("·") + Site.josa(R.fill[0][R.fill[0].length - 1], "을", "를") + " 상대의 기운이 채워 줘요.");
+  if (R.fill[1].length) lines.push("상대에게 없는 " + R.fill[1].join("·") + Site.josa(R.fill[1][R.fill[1].length - 1], "을", "를") + " 나의 기운이 채워 줘요.");
+  el("fillCard").hidden = !lines.length;
+  if (lines.length) {
+    var fb = el("readFill"); fb.innerHTML = "";
+    fb.appendChild(block(d, "십성_원리"));
+    var fp = document.createElement("p"); fp.className = "muted"; fp.style.margin = "10px 0 0";
+    fp.textContent = lines.join(" ");
+    fb.appendChild(fp);
+  }
+
+  // 가족 (확정본 8장)
+  el("familyCard").hidden = rel !== "가족";
+  if (rel === "가족") {
+    var fm = el("readFamily"); fm.innerHTML = "";
+    ["육친_1", "육친_2", "육친_2예", "육친_3"].forEach(function (k) { fm.appendChild(block(d, k)); });
+  }
+
+  el("closing").textContent = text(d, "맺음");
+}
+
+function run(people, rel) {
+  try {
+    people.forEach(function (p) { p.natal = computeChart(p.s.birth12, p.s.cal, p.s.gender).data.natal; });
+  } catch (err) { showError(err.message); return; }
+  var R = Gunghap.analyze({ natal: people[0].natal, timeUnknown: people[0].s.timeUnknown },
+                          { natal: people[1].natal, timeUnknown: people[1].s.timeUnknown });
+  Site.loadData("gunghap").then(function (d) {
+    render(people, rel, R, d);
+    el("formCard").hidden = true;
+    el("result").hidden = false;
+    window.scrollTo(0, 0);
+  });
+}
+
+el("ghForm").addEventListener("submit", function (e) {
+  e.preventDefault();
+  el("errorBox").hidden = true;
+  var people;
+  try { people = [0, 1].map(function (i) { return { s: readPerson(i) }; }); } catch (err) { showError(err.message); return; }
+  var rel = document.querySelector('input[name="rel"]:checked').value;
+  Site.remember(people[0].s);      // 내 생일만 저장합니다 (만세력과 같은 저장 자리)
+  run(people, rel);
+});
+el("again").addEventListener("click", function () {
+  el("result").hidden = true;
+  el("formCard").hidden = false;
+  window.scrollTo(0, 0);
+});
+
+// 저장된 내 생일 불러오기
+(function () { var s = Site.recall(); if (s && s.birth12) fill(0, s); })();
+</script>
+</body>
+</html>

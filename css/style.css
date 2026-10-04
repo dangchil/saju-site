@@ -429,3 +429,23 @@ button.lun { cursor: pointer; }
   .lun .chip { width: 26px; height: 26px; border-radius: 8px; font-size: 16px; }
   .seun-grid .lun .chip { width: 32px; height: 32px; border-radius: 9px; font-size: 19px; }
 }
+
+/* ---- 궁합 화면 (gunghap.html) ---- */
+.gh-person { border: 0; margin: 18px 0 0; padding: 14px 0 0; border-top: 1.5px dashed var(--line); }
+.gh-person legend { font-family: var(--font-title); font-size: 18px; padding: 0 6px 0 0; color: var(--accent); }
+.gh-pair { display: flex; gap: 10px; justify-content: space-between; }
+.gh-one { flex: 1; min-width: 0; }
+.gh-one .who { font-family: var(--font-title); font-size: 16px; text-align: center; margin-bottom: 4px; }
+table.mini { width: 100%; border-collapse: separate; border-spacing: 2px; table-layout: fixed; text-align: center; }
+table.mini th { font-family: var(--font-title); font-weight: 400; font-size: 13px; color: var(--ink-soft); }
+table.mini td { padding: 1px 0; }
+table.mini td.day { background: #FFF6E6; border-radius: 8px; }
+table.gh-rel { width: 100%; border-collapse: collapse; font-size: 14px; }
+table.gh-rel th, table.gh-rel td { padding: 8px 4px; border-top: 1px solid var(--line); text-align: left; vertical-align: middle; }
+table.gh-rel tr:first-child th, table.gh-rel tr:first-child td { border-top: 0; }
+table.gh-rel th.pos { font-family: var(--font-title); font-weight: 400; width: 3.6em; color: var(--ink-soft); }
+table.gh-rel .chip { margin-right: 3px; }
+.rel { display: inline-block; font-size: 13px; padding: 2px 8px; border-radius: 999px; margin: 2px 4px 2px 0; }
+.rel.hap { background: var(--mint); color: #1F6B4A; }
+.rel.geol { background: var(--apricot); color: #9E3520; }
+.rel.pa { background: #F3EEE6; color: var(--ink-soft); }   /* 파는 확정본대로 가볍게만 표시 */
