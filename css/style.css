@@ -449,3 +449,8 @@ table.gh-rel .chip { margin-right: 3px; }
 .rel.hap { background: var(--mint); color: #1F6B4A; }
 .rel.geol { background: var(--apricot); color: #9E3520; }
 .rel.pa { background: #F3EEE6; color: var(--ink-soft); }   /* 파는 확정본대로 가볍게만 표시 */
+
+/* ---------- 궁합: 조후 ---------- */
+.johu-person { font-size: 14px; margin: 0 0 10px; padding: 10px 12px; border-radius: 14px; background: #FBF6EE; line-height: 1.7; }
+.johu-give { font-size: 14px; margin: 0 0 10px; line-height: 1.8; }
+.johu-give .rel { margin-right: 4px; }

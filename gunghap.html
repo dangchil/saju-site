@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=Jua&display=swap">
-<link rel="stylesheet" href="css/style.css?v=20261004.4">
+<link rel="stylesheet" href="css/style.css?v=20261004.5">
 <title>궁합 · 사주 노트</title>
 </head>
 <body data-tab="home">
@@ -85,7 +85,7 @@
 
 <script src="js/manse.js?v=20261004"></script>
 <script src="js/saju-extra.js?v=20261004"></script>
-<script src="js/gunghap.js?v=20261004.4"></script>
+<script src="js/gunghap.js?v=20261004.6"></script>
 <script src="js/common.js?v=20261004"></script>
 <script>
 var ORDER = ["시", "일", "월", "년"];
@@ -184,8 +184,11 @@ function render(people, rel, R, d) {
     if (p.skip) { h += '<td colspan="2" class="muted">시간을 몰라 보지 않아요</td></tr>'; return; }
     h += "<td>" + chipOf(A.natal, l, "b") + chipOf(B.natal, l, "b") + "</td><td>" + relChips(p.rels) + "</td></tr>";
   });
-  h += '<tr><th class="pos">조후</th><td colspan="2">나는 ' + R.temp[0].kind + " 원국, 상대는 " + R.temp[1].kind + " 원국" +
-    (R.johu ? ' <span class="rel hap">온도를 채움</span>' : "") + "</td></tr>";
+  var gv = R.johuGive;
+  h += '<tr><th class="pos">조후</th><td>나 ' + R.johu[0].level + "<br>상대 " + R.johu[1].level + "</td><td>" +
+    gv[0].labels.map(function (t) { return '<span class="rel hap">상대가 ' + t + "</span>"; }).join("") +
+    gv[1].labels.map(function (t) { return '<span class="rel hap">내가 ' + t + "</span>"; }).join("") +
+    (gv[0].gives || gv[1].gives ? "" : '<span class="muted">—</span>') + "</td></tr>";
   el("relTable").innerHTML = h;
 
   // 큰 결론 (확정본 2장)
@@ -235,17 +238,8 @@ function render(people, rel, R, d) {
   if (R.unlock[0] || R.unlock[1]) rb.appendChild(block(d, "걸림_풀어줌", "불안한 자리를 풀어 주는 합"));
   el("relCard").hidden = !rb.children.length;
 
-  // 조후 (확정본 3장)
-  el("johuCard").hidden = !R.johu;
-  if (R.johu) {
-    el("johuCap").textContent = "원국 글자 가운데 불(火)과 물(水)의 수, 태어난 달로 온도를 간단히 가늠했어요. 나는 " +
-      R.temp[0].kind + " 원국, 상대는 " + R.temp[1].kind + " 원국이에요.";
-    var jb = el("readJohu"); jb.innerHTML = "";
-    jb.appendChild(block(d, "조후_1"));
-    jb.appendChild(block(d, "조후_2"));
-    if (found["원진"] || found["충"]) jb.appendChild(block(d, "조후_3"));
-    jb.appendChild(block(d, "조후_정리"));
-  }
+  // 조후 (확정본 3장, 교수님 기준: 월지로 판정, 일지 > 월지 > 그 밖)
+  renderJohu(R, d);
 
   // 서로 채워 주는 십성 (확정본 7장, 한두 문장)
   var lines = [];
@@ -268,6 +262,58 @@ function render(people, rel, R, d) {
   }
 
   el("closing").textContent = text(d, "맺음");
+}
+
+// ---- 조후 ----
+var SEASON = { 2: "봄", 3: "봄", 4: "봄", 8: "가을", 9: "가을", 10: "가을" };
+function hitText(hits) {
+  // 예: "午(일지·정관), 丁(년간·편재)"
+  return hits.map(function (x) { return x.han + "(" + x.place + "·" + x.ten + ")"; }).join(", ");
+}
+function renderJohu(R, d) {
+  el("johuCard").hidden = false;
+  var J = R.johu, G = R.johuGive;
+  el("johuCap").textContent = "태어난 달(월지)로 판정해요. 겨울·여름에 태어난 사람만 조후를 따져요.";
+  var jb = el("readJohu"); jb.innerHTML = "";
+  function line(cls, html) { var p = document.createElement("p"); p.className = cls; p.innerHTML = html; jb.appendChild(p); return p; }
+
+  // 한 사람씩: 판정과 원국 안의 조후 글자
+  J.forEach(function (j, i) {
+    var mHan = B_HA[j.month];
+    var t = "<b>" + WHO[i] + "</b> · " + j.level + " (월지 " + mHan;
+    if (!j.kind) t += ", " + SEASON[j.month] + "에 태어남)";
+    else t += (j.raised ? ", 같은 계절 글자가 더 있어 '아주'로 봄" : "") + ")";
+    if (j.kind) t += "<br>필요한 조후 글자: " + (j.kind === "cold" ? "丙·丁, 巳·午·未" : "壬·癸, 子·丑") +
+      "<br>원국 안의 조후 글자: " + (j.hits.length ? hitText(j.hits) : "없음");
+    line("johu-person", t);
+  });
+
+  // 서로 주는 조후 (상대가 나에게 / 내가 상대에게)
+  [[0, "상대가 나에게"], [1, "내가 상대에게"]].forEach(function (x) {
+    var g = G[x[0]];
+    if (!g.gives) return;
+    // 일지·월지만 보며, 둘 다 있으면 일지를 먼저 보여 준다
+    line("johu-give", g.labels.map(function (t) { return '<span class="rel hap">' + x[1] + " " + t + "</span>"; }).join("") + " " +
+      hitText(g.hits) + " <span class='muted'>(십성은 받는 사람의 일간 기준)</span>");
+  });
+
+  var anyGive = G[0].gives || G[1].gives;
+  if (anyGive) {
+    jb.appendChild(block(d, "조후_주는사람"));
+    jb.appendChild(block(d, "조후_자리"));
+    jb.appendChild(block(d, "조후_1"));
+  }
+  // 조후를 주는 자리가 원진·충과 겹칠 때: 끌림은 조후가, 함께 지내는 어려움은 원진·충이
+  if (R.johuOverlap.length) {
+    line("johu-give", R.johuOverlap.map(function (o) {
+      return o.pos + "지 " + B_HA[o.a] + "·" + B_HA[o.b] + ": 조후와 " + o.rel + "이 겹쳐요";
+    }).join("<br>"));
+    jb.appendChild(block(d, "조후_2"));
+    jb.appendChild(block(d, "조후_3"));
+    jb.appendChild(block(d, "조후_정리"));
+  }
+  if (!J[0].kind || !J[1].kind) jb.appendChild(block(d, "조후_따지지않음"));
+  if (!anyGive && J[0].kind && J[1].kind) line("muted", "두 사람 모두 조후를 따지지만, 서로의 원국에 상대의 조후 글자가 없어요.");
 }
 
 function run(people, rel) {
