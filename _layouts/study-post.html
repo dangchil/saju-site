@@ -3,18 +3,36 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#f6f5f1">
-<title>{{ page.title | default: "사주 공부" }} · 사주 노트</title>
+<meta name="theme-color" content="#FFF7EC">
+<link rel="icon" href="../../images/mascot.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=Jua&display=swap">
 <link rel="stylesheet" href="../../css/style.css">
+<title>{{ page.title | default: "사주 공부" }} · 사주 노트</title>
 </head>
 <body data-tab="study">
 <!-- 사주 공부 글 한 편의 틀입니다. study/posts/ 안의 .md 파일이 이 틀에 담겨 보입니다. -->
 <main class="app">
-  <header class="topbar"><a class="back" href="../index.html" aria-label="글 목록으로">‹</a><h1>사주 공부</h1></header>
-  <article class="card article">
+  <header class="topbar">
+    <a class="icon-btn plain" href="../index.html" aria-label="글 목록으로" data-icon="back"></a>
+    <h1>사주 공부</h1>
+  </header>
+  <article class="card article" id="article">
     {{ content }}
   </article>
 </main>
 <script src="../../js/common.js"></script>
+<script>
+// 본문이 "준비 중" 한 줄뿐이면 흐리게 보여 줍니다.
+(function () {
+  var art = document.getElementById("article");
+  var body = [].filter.call(art.children, function (c) { return c.tagName !== "H1"; });
+  if (body.length === 1 && Site.isPending(body[0].textContent)) {
+    body[0].className = "reading pending";
+    body[0].innerHTML = '<span class="rb">준비 중</span>';
+  }
+})();
+</script>
 </body>
 </html>
