@@ -39,9 +39,9 @@ h1, h2, h3, .title-font { font-family: var(--font-title); font-weight: 400; lett
 button { font: inherit; color: inherit; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
-/* 앱처럼 가운데 480px */
+/* 앱처럼 가운데. PC에서는 820px까지 넓어지고, 글 본문은 640px을 넘지 않습니다(아래 @media) */
 .app {
-  max-width: 480px; margin: 0 auto; min-height: 100vh;
+  max-width: 820px; margin: 0 auto; min-height: 100vh;
   padding: 0 16px calc(var(--tabbar-h) + 28px + env(safe-area-inset-bottom));
 }
 .app.no-tab { padding-bottom: 32px; }
@@ -258,9 +258,13 @@ table.wonguk .chip { width: 48px; height: 48px; border-radius: 14px; font-size: 
 .ohaeng .fill { height: 100%; border-radius: 999px; min-width: 0; }
 .ohaeng .num { width: 28px; text-align: right; font-family: var(--font-title); color: var(--ink-soft); }
 
-.strip { display: flex; flex-direction: row-reverse; gap: 8px; overflow-x: auto; padding: 4px 2px 10px; scrollbar-width: thin; }
+/* 대운·세운 칸 묶음: 옆으로 밀지 않고 한눈에 다 보이게 칸을 균등하게 나눕니다.
+   direction: rtl 로 첫 칸이 오른쪽 끝에 오고, 오른쪽에서 왼쪽으로 채워집니다. */
+.strip { display: grid; gap: 8px; direction: rtl; padding: 4px 0 10px; }
+.daeun-grid { grid-template-columns: repeat(8, minmax(0, 1fr)); }
+.seun-grid { grid-template-columns: repeat(10, minmax(0, 1fr)); }
 .lun {
-  flex: 0 0 auto; width: 66px; min-height: 44px; text-align: center;
+  direction: ltr; min-width: 0; min-height: 44px; text-align: center;
   border: 2px solid transparent; border-radius: 18px; background: #FBF6EE; padding: 8px 4px;
   display: flex; flex-direction: column; align-items: center; gap: 4px;
 }
@@ -360,7 +364,7 @@ button.lun { cursor: pointer; }
   background: #fff; box-shadow: 0 -3px 0 #F0E2CC;
   padding-bottom: env(safe-area-inset-bottom); border-radius: 22px 22px 0 0;
 }
-.tabbar nav { max-width: 480px; margin: 0 auto; display: flex; height: var(--tabbar-h); }
+.tabbar nav { max-width: 820px; margin: 0 auto; display: flex; height: var(--tabbar-h); }
 .tabbar a {
   flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
   text-decoration: none; color: #A79DA6; font-family: var(--font-title); font-size: 13px; min-height: 44px;
@@ -403,3 +407,25 @@ button.lun { cursor: pointer; }
 .test-row { display: flex; gap: 8px; margin: 10px 0 6px; }
 .test-row .btn { min-height: 46px; font-size: 16px; }
 .composer input:focus { outline: none; border-color: var(--violet); }
+
+/* ---------- 넓은 화면(PC): 글 본문은 640px 안쪽으로 ---------- */
+@media (min-width: 700px) {
+  .app > :not(.wide):not(.wide-wrap),
+  .wide-wrap > :not(.wide) { max-width: 640px; margin-left: auto; margin-right: auto; }
+}
+
+/* ---------- 좁은 화면: 대운·세운 칸을 작게 ---------- */
+/* 세운 10칸은 5칸씩 두 줄 (윗줄 앞의 5년, 아랫줄 뒤의 5년, 각 줄은 오른쪽에서 왼쪽).
+   600px보다 조금 넓은 화면에서도 10칸이 넘치지 않도록 760px 이하에서 두 줄로 바꿉니다. */
+@media (max-width: 760px) {
+  .seun-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+}
+@media (max-width: 600px) {
+  .card.wide { padding-left: 12px; padding-right: 12px; }
+  .strip { gap: 4px; }
+  .lun { border-radius: 12px; padding: 6px 1px; gap: 3px; }
+  .lun .top { font-size: 13px; }
+  .lun .sib, .lun .now { font-size: 11px; letter-spacing: -0.03em; }   /* 11px 아래로는 내리지 않습니다 */
+  .lun .chip { width: 26px; height: 26px; border-radius: 8px; font-size: 16px; }
+  .seun-grid .lun .chip { width: 32px; height: 32px; border-radius: 9px; font-size: 19px; }
+}
