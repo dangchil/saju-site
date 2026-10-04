@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=Jua&display=swap">
-<link rel="stylesheet" href="css/style.css?v=20261004.2">
+<link rel="stylesheet" href="css/style.css?v=20261004.3">
 <title>만세력 · 사주 노트</title>
 </head>
 <body data-tab="home">
@@ -51,7 +51,7 @@
   </section>
 
   <!-- 결과 -->
-  <div id="result" hidden>
+  <div id="result" class="wide-wrap" hidden>
     <section class="card">
       <div class="result-head">
         <img class="mascot" data-mascot alt="">
@@ -70,13 +70,13 @@
       <div id="ohaengBars"></div>
     </section>
 
-    <section class="card">
+    <section class="card wide">
       <h2>대운</h2>
       <p class="caption" id="daeunCaption"></p>
-      <div class="strip" id="daeunStrip"></div>
+      <div class="strip daeun-grid" id="daeunStrip"></div>
       <h2 style="margin-top:14px">세운</h2>
       <p class="caption" id="seunCaption"></p>
-      <div class="strip" id="seunStrip"></div>
+      <div class="strip seun-grid" id="seunStrip"></div>
     </section>
 
     <!-- 풀이: data/ 폴더의 파일에서 읽어 옵니다 -->
@@ -174,20 +174,12 @@ function lunCard(o, top, opts) {
     "</" + tag + ">";
 }
 
-// 가로 띠 안에서 고른 칸이 가운데 오도록 옆으로만 밀어 줍니다 (화면 전체는 움직이지 않음).
-function centerIn(strip, sel) {
-  var cur = strip.querySelector(sel);
-  if (!cur) return;
-  var s = strip.getBoundingClientRect(), c = cur.getBoundingClientRect();
-  strip.scrollLeft += (c.left + c.width / 2) - (s.left + s.width / 2);
-}
-
 var daeun = [];
 
 function renderDaeun(data) {
   daeun = data.daeun;
   el("daeunCaption").textContent = data.direction + " · 대운수 " + data.daeun_num + " · 대운을 누르면 아래 세운이 바뀌어요";
-  // 오른쪽에서 왼쪽으로: 첫 대운이 오른쪽 끝 (띠가 row-reverse 라 DOM 순서대로 넣으면 됩니다)
+  // 오른쪽에서 왼쪽으로: 첫 대운이 오른쪽 끝 (칸 묶음이 오른쪽부터 채워지므로 DOM 순서대로 넣으면 됩니다)
   el("daeunStrip").innerHTML = daeun.map(function (d, i) {
     return lunCard(d, d.age + "세", { button: true, idx: i });
   }).join("");
@@ -210,8 +202,6 @@ function selectDaeun(idx) {
     var now = s.year === THIS_YEAR;
     return lunCard(s, s.year, { cls: now ? "this-year" : "", now: now ? "올해" : "" });
   }).join("");
-  centerIn(el("daeunStrip"), ".lun.selected");
-  centerIn(el("seunStrip"), ".lun.this-year");
 }
 
 el("daeunStrip").addEventListener("click", function (e) {
