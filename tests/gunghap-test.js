@@ -91,6 +91,11 @@ check("상대 일지 午 + 천간 丙·丁 → 일지만 셈", G.johuGive(mk("�
 check("상대 년지 午·시지 巳는 세지 않음", String(G.johuGive(mk("庚午 戊寅 甲申 辛巳"), A).gives), "false");
 check("상대 일지·월지 둘 다 조후 글자 → 둘 다, 일지 먼저", G.johuGive(mk("甲辰 庚午 丁巳 甲辰"), A).labels.join(","), "일지로 조후를 줌,월지로 조후를 줌");
 check("조후 글자의 십성 (받는 사람 일간 庚 기준 午 = 정관)", G.johuGive(B, A).hits[0].ten, "정관");
+// 내 원국 안의 조후 글자도 일지·월지만 본다 (판정은 그대로 월지로)
+var own = G.johuOf(mk("庚午 戊子 癸丑 丁巳").natal);
+check("자월생, 년지 午·시간 丁·시지 巳만 있음 → 판정은 그대로", own.level, "아주 추움");
+check("자월생, 년지 午·시간 丁·시지 巳만 있음 → 원국 안의 조후 글자 없음", String(own.hits.length), "0");
+check("자월생, 일지 午 → 원국 안의 조후 글자는 일지", G.johuOf(mk("丙辰 庚子 甲午 丁卯").natal).hits.map(function (h) { return h.place + h.han; }).join(","), "일지午");
 // 6) 조후와 원진이 겹치는 자리 (확정본 3장 축오): 내 일지 丑(자월생), 상대 일지 午
 var R = G.analyze(mk("甲辰 丙子 癸丑 戊午"), mk("辛酉 庚寅 甲午 甲戌"));
 check("일지 丑·午: 조후 + 원진 겹침", R.johuOverlap.map(function (o) { return o.pos + o.rel; }).join(","), "일원진");
